@@ -28,6 +28,10 @@ std::ostream& operator<<(std::ostream& os, const KNN_config& kc) {
 	os << "maximum iteration number: " << kc.max_interation << std::endl;
 	os << "output file name: " << kc.output_file_name << std::endl;
 	os << "precision for norm: " << kc.norm_precision << std::endl;
+	if (kc.until_converge)
+		os << "maximum iteration step unlimitted" << std::endl;
+	else
+		os << "maximum iteration step: " << kc.max_interation << std::endl;
 
 	return os;
 }
@@ -52,6 +56,10 @@ std::shared_ptr<KNN_config> KNN_parse_arg(int argc, const char *argv[]) {
 	if (vm.count("help")) {
 		std::cout << desc << "\n";
 		return nullptr;
+	}
+	if (-1 == conf->max_interation) {
+		conf->max_interation = 1;
+		conf->until_converge = true;
 	}
 
 	return conf;
@@ -119,10 +127,18 @@ int generate_random_initial_cluster(std::shared_ptr<KNN_config> conf, Eigen::Vec
 	return 0;
 }
 
-void output_cluster(std::shared_ptr<KNN_config>conf, Eigen::VectorXi cluster) {
+void output_cluster(std::shared_ptr<KNN_config>conf, Eigen::VectorXi &cluster) {
 	std::ofstream fout(conf->output_file_name);
 	fout << cluster << std::endl;
 	fout.close();
+}
+
+double compute_loss(std::shared_ptr<KNN_config>conf, Eigen::MatrixXf &data, Eigen::VectorXi &cluster, Eigen::MatrixXf &center) {
+	double l = 0;
+	for (int n = 0; n < conf->data_number; ++n) {
+		l += (data.col(n).cast<double>() - center.col(cluster(n)).cast<double>()).norm();
+	}
+	return l;
 }
 
 void generate_libsvm_data_file(std::string file_name, std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data, Eigen::VectorXf &label) {

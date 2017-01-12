@@ -16,12 +16,16 @@ bool naive_update_center(std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data
 		workspace2(c) += 1;
 		workspace1.col(c) += data.col(n).cast<double>();
 	}
-	for (int k = 0; k < conf->cluster_number; ++k) {
-		Eigen::VectorXf new_center = (workspace1.col(k) / workspace2(k)).cast<float>();
-		if ((new_center - center.col(k)).norm() > conf->norm_precision)
-			changed = true;
-		center.col(k) = new_center;
-	}
+	for (int k = 0; k < conf->cluster_number; ++k)
+		if (0 == workspace2(k)) {
+			std::cerr << "zero data point in cluster" << std::endl;
+			continue;
+		} else {
+			Eigen::VectorXf new_center = (workspace1.col(k) / workspace2(k)).cast<float>();
+			if ((new_center - center.col(k)).norm() > conf->norm_precision)
+				changed = true;
+			center.col(k) = new_center;
+		}
 	return changed;
 }
 
@@ -75,6 +79,9 @@ int main(int argc, const char* argv[]) {
 			std::cerr << "converges at step " << i << std::endl;
 			break;
 		}
+		if (conf->until_converge)
+			conf->max_interation += 1;
+		std::cerr << "step " << i << " loss " << compute_loss(conf, data, cluster, center);
 	}
 	output_cluster(conf, cluster);
 

@@ -14,6 +14,7 @@ struct KNN_config {
 	bool have_seed_file;
 	int max_interation;
 	float norm_precision;
+	bool until_converge;
 	std::string seed_file_name;
 };
 
@@ -23,6 +24,7 @@ int KNN_get_data(std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data, Eigen:
 int KNN_get_seed(std::shared_ptr<KNN_config> conf, Eigen::VectorXi &cluster);
 void generate_libsvm_data_file(std::string file_name, std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data, Eigen::VectorXf &label);
 int generate_random_initial_cluster(std::shared_ptr<KNN_config> conf, Eigen::VectorXi &cluster);
-void output_cluster(std::shared_ptr<KNN_config>conf, Eigen::VectorXi cluster);
+void output_cluster(std::shared_ptr<KNN_config>conf, Eigen::VectorXi &cluster);
+double compute_loss(std::shared_ptr<KNN_config>conf, Eigen::MatrixXf &data, Eigen::VectorXi &cluster, Eigen::MatrixXf &center);
 
 #endif
