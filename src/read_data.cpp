@@ -3,17 +3,14 @@
 #include <Eigen/Dense>
 
 int main(int, char* argv[]) {
-	printf("%s\n%s\n%s\n%s\n", argv[0], argv[1], argv[2], argv[3]);
 	FILE* f = fopen(argv[1], "r");
 	int N;
 	sscanf(argv[2], "%d", &N);
-	printf("%d\n", N);
 	int D;
 	sscanf(argv[3], "%d", &D);
 	Eigen::MatrixXf data(N, D);
 	Eigen::VectorXf label(N);
 	for (int n = 0; n < N; ++n) {
-		printf("%d\n", n);
 		fscanf(f, "%f%*[ ]", &label(n));
 		int c;
 		while ('\n' != (c = getc(f))) {
@@ -26,8 +23,10 @@ int main(int, char* argv[]) {
 	}
 	fclose(f);
 
-	std::cout << data << std::endl;
-	std::cout << label << std::endl;
+	//std::cout << data << std::endl;
+	//std::cout << label << std::endl;
+	std::cout << "Maximum value " << data.maxCoeff() << std::endl;
+	std::cout << "Minimum value " << data.minCoeff() << std::endl;
 
 	return 0;
 }
