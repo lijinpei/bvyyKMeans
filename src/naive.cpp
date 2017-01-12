@@ -8,9 +8,10 @@
 
 
 bool naive_update_center(std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data, Eigen::VectorXi &cluster, Eigen::MatrixXf &center, Eigen::MatrixXd &workspace1, Eigen::VectorXi &workspace2) {
+	double l1 = compute_loss(conf, data, cluster, center);
 	bool changed = false;
-	workspace1 = Eigen::MatrixXd::Zero(conf->data_dimension, conf->cluster_number);
-	workspace2 = Eigen::VectorXi::Zero(conf->cluster_number);
+	workspace1.setZero(conf->data_dimension, conf->cluster_number);
+	workspace2.setZero(conf->cluster_number);
 	for (int n = 0; n < conf->data_number; ++n) {
 		int c = cluster(n);
 		workspace2(c) += 1;
@@ -26,23 +27,36 @@ bool naive_update_center(std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data
 				changed = true;
 			center.col(k) = new_center;
 		}
+	double l2 = compute_loss(conf, data, cluster, center);
+	if (l2 - l1 > 1)
+		std::cerr << "Loss increases in update center" << std::endl;
 	return changed;
 }
 
 bool naive_update_cluster(std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data, Eigen::VectorXi &cluster, Eigen::MatrixXf &center) {
+	double l1 = compute_loss(conf, data, cluster, center);
 	bool changed = false;
 	for (int n = 0; n < conf->data_number; ++n) {
 		int mp = 0;
 		float mv = (data.col(n) - center.col(0)).squaredNorm();
 		for (int k = 1; k < conf->cluster_number; ++k) {
 			float nv = (data.col(n) - center.col(k)).squaredNorm();
-			if (nv < mv)
+			if (nv < mv) {
 				mp = k;
+				mv = nv;
+			}
 		}
 		if (cluster(n) != mp)
 			changed = true;
+		double d1 = (data.col(n) - center.col(mp)).squaredNorm();
+		double d2 = (data.col(n) - center.col(cluster(n))).squaredNorm();
+		if (mp != cluster(n) && d1 > d2)
+			std::cerr << "Loss increases in single update cluster " << mp << " " << cluster(n) << std::endl;
 		cluster(n) = mp;
 	}
+	double l2 = compute_loss(conf, data, cluster, center);
+	if (l2 > l1)
+		std::cerr << "Loss increases in update cluster" << std::endl;
 	return changed;
 }
 
@@ -70,8 +84,9 @@ int main(int argc, const char* argv[]) {
 	Eigen::MatrixXf center(conf->data_dimension, conf->cluster_number);
 	Eigen::MatrixXd workspace1(conf->data_dimension, conf->cluster_number);
 	Eigen::VectorXi workspace2(conf->cluster_number);
+	double ll;
+	double nl;
 	for (int i = 0; i < conf->max_interation; ++i) {
-		std::cerr << i << std::endl;
 		bool changed = false;
 		changed = changed || naive_update_center(conf, data, cluster, center, workspace1, workspace2);
 		changed = changed || naive_update_cluster(conf, data, cluster, center);
@@ -81,7 +96,12 @@ int main(int argc, const char* argv[]) {
 		}
 		if (conf->until_converge)
 			conf->max_interation += 1;
-		std::cerr << "step " << i << " loss " << compute_loss(conf, data, cluster, center);
+		nl = compute_loss(conf, data, cluster, center);
+		if (0 != i && nl - ll > 1) {
+			std::cerr << "loss increase in step " << i << std::endl;
+		}
+		std::cerr << "step " << i << " loss " << nl << std::endl;
+		ll = nl;
 	}
 	output_cluster(conf, cluster);
 
