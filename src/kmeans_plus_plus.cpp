@@ -25,7 +25,7 @@ int kmeans_plus_plus_initialize(PConf conf, DataMat &data, CenterMat &center) {
 	static boost::random::mt19937 gen{static_cast<std::uint32_t>(std::time(0))};
 	static boost::random::uniform_int_distribution<> dist{0, conf->data_number - 1};
 	Eigen::VectorXi chosen(conf->data_number);
-	chosen.setZero(conf->data_number);
+	chosen.setZero();
 	int n =  dist(gen);
 	center.col(0) = data.col(n);
 	Eigen::VectorXd min_dist(conf->data_number);

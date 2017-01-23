@@ -10,8 +10,8 @@
 bool naive_update_center(std::shared_ptr<KMEANS_config> conf, Eigen::MatrixXf &data, Eigen::VectorXi &cluster, Eigen::MatrixXf &center, Eigen::MatrixXd &workspace1, Eigen::VectorXi &workspace2) {
 	double l1 = compute_loss(conf, data, cluster, center);
 	bool changed = false;
-	workspace1.setZero(conf->data_dimension, conf->cluster_number);
-	workspace2.setZero(conf->cluster_number);
+	workspace1.setZero();
+	workspace2.setZero();
 	for (int n = 0; n < conf->data_number; ++n) {
 		int c = cluster(n);
 		workspace2(c) += 1;
@@ -82,20 +82,19 @@ int main(int argc, const char* argv[]) {
 		if (kmeans_plus_plus_initialize(conf, data, center)) {
 			std::cerr << "error when kmeans plus plus initialization" << std::endl;
 		}
-	}
+	} else
+		generate_random_initial_cluster(conf, data, center);
 
 	//generate_libsvm_data_file("test", conf, data, label);
 
-	if (!conf->have_seed_file)
-		generate_random_initial_cluster(conf, cluster);
 	Eigen::MatrixXd workspace1(conf->data_dimension, conf->cluster_number);
 	Eigen::VectorXi workspace2(conf->cluster_number);
 	double ll;
 	double nl;
 	for (int i = 0; i < conf->max_interation; ++i) {
 		bool changed = false;
-		changed = changed || naive_update_center(conf, data, cluster, center, workspace1, workspace2);
 		changed = changed || naive_update_cluster(conf, data, cluster, center);
+		changed = changed || naive_update_center(conf, data, cluster, center, workspace1, workspace2);
 		if (!changed) {
 			std::cerr << "converges at step " << i << std::endl;
 			break;

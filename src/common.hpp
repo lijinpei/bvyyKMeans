@@ -30,7 +30,7 @@ PConf KMEANS_parse_arg(int argc, const char *argv[]);
 int KMEANS_get_data(PConf conf, DataMat &data, LabelVec &label);
 int KMEANS_get_seed(PConf conf, ClusterVec &cluster);
 void generate_libsvm_data_file(std::string file_name, PConf conf, DataMat &data, LabelVec &label);
-int generate_random_initial_cluster(PConf conf, ClusterVec &cluster);
+int generate_random_initial_cluster(PConf conf, DataMat &data, CenterMat &center);
 void output_cluster(PConf conf, ClusterVec &cluster);
 double compute_loss(PConf conf, DataMat &data, ClusterVec &cluster, CenterMat &center);
 

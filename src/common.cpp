@@ -120,11 +120,22 @@ int KMEANS_get_seed(std::shared_ptr<KMEANS_config> conf, Eigen::VectorXi &cluste
 	return 0;
 }
 
-int generate_random_initial_cluster(std::shared_ptr<KMEANS_config> conf, Eigen::VectorXi &cluster) {
+int generate_random_initial_cluster(PConf conf, DataMat &data, CenterMat &center) {
 	boost::random::mt19937 gen{static_cast<std::uint32_t>(std::time(0))};
 	boost::random::uniform_int_distribution<> dist{0, conf->cluster_number - 1};
-	for (int n = 0; n < conf->data_number; ++n)
-		cluster(n) = dist(gen);
+	Eigen::VectorXi chosen(conf->data_number);
+	chosen.setZero();
+	for (int i = 0; i < conf->cluster_number; ++i) {
+		int n;
+		while (true) {
+			n = dist(gen);
+			if (!chosen(n)) {
+				chosen(n) = 1;
+				break;
+			}
+		}
+		center.col(i) = data.col(n);
+	}
 	return 0;
 }
 
