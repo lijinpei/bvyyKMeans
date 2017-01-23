@@ -15,7 +15,7 @@
 
 namespace po = boost::program_options;
 
-std::ostream& operator<<(std::ostream& os, const KNN_config& kc) {
+std::ostream& operator<<(std::ostream& os, const KMEANS_config& kc) {
 	os << "data file name: " << kc.data_file_name << std::endl;
 	os << "data number: " << kc.data_number << std::endl;
 	os << "data dimension: " << kc.data_dimension << std::endl;
@@ -36,19 +36,20 @@ std::ostream& operator<<(std::ostream& os, const KNN_config& kc) {
 	return os;
 }
 
-std::shared_ptr<KNN_config> KNN_parse_arg(int argc, const char *argv[]) {
-	std::shared_ptr<KNN_config> conf(new KNN_config);
+std::shared_ptr<KMEANS_config> KMEANS_parse_arg(int argc, const char *argv[]) {
+	std::shared_ptr<KMEANS_config> conf(new KMEANS_config);
 	po::options_description desc("Allowed options");
 	desc.add_options()
 		("help,h", "produce help message")
 		("data_file_name,f", po::value<std::string>(&conf->data_file_name), "libsvm format data file name")
 		("output_file_name,o", po::value<std::string>(&conf->output_file_name)->default_value("clustering.output"), "clustering output file name")
-		("seed_file_name,s", po::value<std::string>(&conf->seed_file_name), "initial KNN clustering")
+		("seed_file_name,s", po::value<std::string>(&conf->seed_file_name), "initial KMEANS clustering")
 		("data_number,n", po::value<int>(&conf->data_number), "number of data points")
 		("data_dimension,d", po::value<int>(&conf->data_dimension), "dimension of data points")
 		("cluster_number,k", po::value<int>(&conf->cluster_number), "number of clusters")
 		("max_iteration,i", po::value<int>(&conf->max_interation)->default_value(-1), "maximum number of iteration")
-		("norm_precision,p", po::value<float>(&conf->norm_precision)->default_value(1e-4), "precision of the norm of the change of centers for judging convergenve");
+		("norm_precision,p", po::value<float>(&conf->norm_precision)->default_value(1e-4), "precision of the norm of the change of centers for judging convergenve")
+		("kpp", "switch on kmeans++ initialization");
 	po::variables_map vm;
 	po::store(po::parse_command_line(argc, argv, desc), vm);
 	po::notify(vm);
@@ -57,6 +58,7 @@ std::shared_ptr<KNN_config> KNN_parse_arg(int argc, const char *argv[]) {
 		std::cout << desc << "\n";
 		return nullptr;
 	}
+	conf->kmeans_plus_plus_initialization = vm.count("kpp");
 	if (-1 == conf->max_interation) {
 		conf->max_interation = 1;
 		conf->until_converge = true;
@@ -65,7 +67,7 @@ std::shared_ptr<KNN_config> KNN_parse_arg(int argc, const char *argv[]) {
 	return conf;
 }
 
-int KNN_get_data(std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data, Eigen::VectorXf &label) {
+int KMEANS_get_data(std::shared_ptr<KMEANS_config> conf, Eigen::MatrixXf &data, Eigen::VectorXf &label) {
 	FILE* f = fopen(conf->data_file_name.c_str(), "r");
 	int& N = conf->data_number;
 	int& D = conf->data_dimension;
@@ -95,7 +97,7 @@ int KNN_get_data(std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data, Eigen:
 	return 0;
 }
 
-int KNN_get_seed(std::shared_ptr<KNN_config> conf, Eigen::VectorXi &cluster) {
+int KMEANS_get_seed(std::shared_ptr<KMEANS_config> conf, Eigen::VectorXi &cluster) {
 	FILE *f = fopen(conf->seed_file_name.c_str(), "r");
 	int& N = conf->data_number;
 	int& K = conf->cluster_number;
@@ -118,22 +120,21 @@ int KNN_get_seed(std::shared_ptr<KNN_config> conf, Eigen::VectorXi &cluster) {
 	return 0;
 }
 
-int generate_random_initial_cluster(std::shared_ptr<KNN_config> conf, Eigen::VectorXi &cluster) {
-	std::time_t now = std::time(0);
-	boost::random::mt19937 gen{static_cast<std::uint32_t>(now)};
+int generate_random_initial_cluster(std::shared_ptr<KMEANS_config> conf, Eigen::VectorXi &cluster) {
+	boost::random::mt19937 gen{static_cast<std::uint32_t>(std::time(0))};
 	boost::random::uniform_int_distribution<> dist{0, conf->cluster_number - 1};
 	for (int n = 0; n < conf->data_number; ++n)
 		cluster(n) = dist(gen);
 	return 0;
 }
 
-void output_cluster(std::shared_ptr<KNN_config>conf, Eigen::VectorXi &cluster) {
+void output_cluster(std::shared_ptr<KMEANS_config>conf, Eigen::VectorXi &cluster) {
 	std::ofstream fout(conf->output_file_name);
 	fout << cluster << std::endl;
 	fout.close();
 }
 
-double compute_loss(std::shared_ptr<KNN_config>conf, Eigen::MatrixXf &data, Eigen::VectorXi &cluster, Eigen::MatrixXf &center) {
+double compute_loss(std::shared_ptr<KMEANS_config>conf, Eigen::MatrixXf &data, Eigen::VectorXi &cluster, Eigen::MatrixXf &center) {
 	double l = 0;
 	for (int n = 0; n < conf->data_number; ++n) {
 		l += (data.col(n).cast<double>() - center.col(cluster(n)).cast<double>()).norm();
@@ -141,7 +142,7 @@ double compute_loss(std::shared_ptr<KNN_config>conf, Eigen::MatrixXf &data, Eige
 	return l;
 }
 
-void generate_libsvm_data_file(std::string file_name, std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data, Eigen::VectorXf &label) {
+void generate_libsvm_data_file(std::string file_name, std::shared_ptr<KMEANS_config> conf, Eigen::MatrixXf &data, Eigen::VectorXf &label) {
 	std::ofstream fout(file_name);
 	fout << std::fixed << std::setprecision(6);
 	int &N = conf->data_number;

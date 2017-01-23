@@ -1,11 +1,11 @@
-#ifndef KNN_COMMON_H
-#define KNN_COMMON_H
+#ifndef KMEANS_COMMON_H
+#define KMEANS_COMMON_H
 
 #include <string>
 #include <memory>
 #include <Eigen/Dense>
 
-struct KNN_config {
+struct KMEANS_config {
 	std::string data_file_name;
 	std::string output_file_name;
 	int data_number;
@@ -15,16 +15,25 @@ struct KNN_config {
 	int max_interation;
 	float norm_precision;
 	bool until_converge;
+	bool kmeans_plus_plus_initialization;
 	std::string seed_file_name;
 };
 
-std::ostream& operator<<(std::ostream& os, const KNN_config& kc);
-std::shared_ptr<KNN_config> KNN_parse_arg(int argc, const char *argv[]);
-int KNN_get_data(std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data, Eigen::VectorXf &label);
-int KNN_get_seed(std::shared_ptr<KNN_config> conf, Eigen::VectorXi &cluster);
-void generate_libsvm_data_file(std::string file_name, std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data, Eigen::VectorXf &label);
-int generate_random_initial_cluster(std::shared_ptr<KNN_config> conf, Eigen::VectorXi &cluster);
-void output_cluster(std::shared_ptr<KNN_config>conf, Eigen::VectorXi &cluster);
-double compute_loss(std::shared_ptr<KNN_config>conf, Eigen::MatrixXf &data, Eigen::VectorXi &cluster, Eigen::MatrixXf &center);
+using DataMat = Eigen::MatrixXf;
+using LabelVec = Eigen::VectorXf;
+using CenterMat = Eigen::MatrixXf;
+using ClusterVec = Eigen::VectorXi;
+using PConf = std::shared_ptr<KMEANS_config>;
 
+std::ostream& operator<<(std::ostream& os, const KMEANS_config& kc);
+PConf KMEANS_parse_arg(int argc, const char *argv[]);
+int KMEANS_get_data(PConf conf, DataMat &data, LabelVec &label);
+int KMEANS_get_seed(PConf conf, ClusterVec &cluster);
+void generate_libsvm_data_file(std::string file_name, PConf conf, DataMat &data, LabelVec &label);
+int generate_random_initial_cluster(PConf conf, ClusterVec &cluster);
+void output_cluster(PConf conf, ClusterVec &cluster);
+double compute_loss(PConf conf, DataMat &data, ClusterVec &cluster, CenterMat &center);
+
+
+int kmeans_plus_plus_initialize(PConf conf, DataMat &data, CenterMat &center);
 #endif

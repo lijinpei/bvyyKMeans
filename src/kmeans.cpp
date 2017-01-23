@@ -7,7 +7,7 @@
 #include <fstream>
 
 
-bool naive_update_center(std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data, Eigen::VectorXi &cluster, Eigen::MatrixXf &center, Eigen::MatrixXd &workspace1, Eigen::VectorXi &workspace2) {
+bool naive_update_center(std::shared_ptr<KMEANS_config> conf, Eigen::MatrixXf &data, Eigen::VectorXi &cluster, Eigen::MatrixXf &center, Eigen::MatrixXd &workspace1, Eigen::VectorXi &workspace2) {
 	double l1 = compute_loss(conf, data, cluster, center);
 	bool changed = false;
 	workspace1.setZero(conf->data_dimension, conf->cluster_number);
@@ -33,7 +33,7 @@ bool naive_update_center(std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data
 	return changed;
 }
 
-bool naive_update_cluster(std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &data, Eigen::VectorXi &cluster, Eigen::MatrixXf &center) {
+bool naive_update_cluster(std::shared_ptr<KMEANS_config> conf, Eigen::MatrixXf &data, Eigen::VectorXi &cluster, Eigen::MatrixXf &center) {
 	double l1 = compute_loss(conf, data, cluster, center);
 	bool changed = false;
 	for (int n = 0; n < conf->data_number; ++n) {
@@ -61,27 +61,33 @@ bool naive_update_cluster(std::shared_ptr<KNN_config> conf, Eigen::MatrixXf &dat
 }
 
 int main(int argc, const char* argv[]) {
-	std::shared_ptr<KNN_config> conf = KNN_parse_arg(argc, argv);
+	std::shared_ptr<KMEANS_config> conf = KMEANS_parse_arg(argc, argv);
 	if (!conf)
 		return 0;
-	Eigen::MatrixXf data(conf->data_dimension, conf->data_number);
-	Eigen::VectorXf label(conf->data_number);
-	Eigen::VectorXi cluster(conf->data_number);
-	if (KNN_get_data(conf, data, label)) {
-		return 0;
+	DataMat data(conf->data_dimension, conf->data_number);
+	LabelVec label(conf->data_number);
+	ClusterVec cluster(conf->data_number);
+	CenterMat center(conf->data_dimension, conf->cluster_number);
+	if (KMEANS_get_data(conf, data, label)) {
+		std::cerr << "error when get data" << std::endl;
+		return 1;
 	}
-	//std::cout << data << std::endl;
+
 	if (conf->have_seed_file) {
-		if (KNN_get_seed(conf, cluster))
+		if (KMEANS_get_seed(conf, cluster)) {
+			std::cerr << "error when get seed" << std::endl;
 			return 0;
-		//std::cout << label << std::endl;
+		}
+	} else if (conf->kmeans_plus_plus_initialization) {
+		if (kmeans_plus_plus_initialize(conf, data, center)) {
+			std::cerr << "error when kmeans plus plus initialization" << std::endl;
+		}
 	}
 
 	//generate_libsvm_data_file("test", conf, data, label);
 
 	if (!conf->have_seed_file)
 		generate_random_initial_cluster(conf, cluster);
-	Eigen::MatrixXf center(conf->data_dimension, conf->cluster_number);
 	Eigen::MatrixXd workspace1(conf->data_dimension, conf->cluster_number);
 	Eigen::VectorXi workspace2(conf->cluster_number);
 	double ll;
