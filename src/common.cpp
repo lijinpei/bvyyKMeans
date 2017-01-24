@@ -20,8 +20,8 @@ std::ostream& operator<<(std::ostream& os, const KMEANS_config& kc) {
 	os << "data number: " << kc.data_number << std::endl;
 	os << "data dimension: " << kc.data_dimension << std::endl;
 	os << "cluster number: " << kc.cluster_number << std::endl;
-	if (kc.have_seed_file) {
-		os << "have seed file: " << kc.seed_file_name << std::endl;
+	if (kc.input_seed) {
+		os << "have seed file: " << kc.input_seed_file_name << std::endl;
 	} else {
 		os << "don't have seed file" << std::endl;
 	}
@@ -36,29 +36,33 @@ std::ostream& operator<<(std::ostream& os, const KMEANS_config& kc) {
 	return os;
 }
 
-std::shared_ptr<KMEANS_config> KMEANS_parse_arg(int argc, const char *argv[]) {
+PConf KMEANS_parse_arg(int argc, const char *argv[]) {
 	std::shared_ptr<KMEANS_config> conf(new KMEANS_config);
 	po::options_description desc("Allowed options");
 	desc.add_options()
 		("help,h", "produce help message")
 		("data_file_name,f", po::value<std::string>(&conf->data_file_name), "libsvm format data file name")
 		("output_file_name,o", po::value<std::string>(&conf->output_file_name)->default_value("clustering.output"), "clustering output file name")
-		("seed_file_name,s", po::value<std::string>(&conf->seed_file_name), "initial KMEANS clustering")
+		("input_seed_file_name,s", po::value<std::string>(&conf->input_seed_file_name), "file name for seed input")
+		("output_seed_file_name,q", po::value<std::string>(&conf->output_seed_file_name), "file name for seed output")
 		("data_number,n", po::value<int>(&conf->data_number), "number of data points")
 		("data_dimension,d", po::value<int>(&conf->data_dimension), "dimension of data points")
 		("cluster_number,k", po::value<int>(&conf->cluster_number), "number of clusters")
 		("max_iteration,i", po::value<int>(&conf->max_interation)->default_value(-1), "maximum number of iteration")
 		("norm_precision,p", po::value<float>(&conf->norm_precision)->default_value(1e-4), "precision of the norm of the change of centers for judging convergenve")
+		("yinyang,y", "yinyang kmeans")
 		("kpp", "switch on kmeans++ initialization");
 	po::variables_map vm;
 	po::store(po::parse_command_line(argc, argv, desc), vm);
 	po::notify(vm);
-	conf->have_seed_file = vm.count("seed_file_name");
 	if (vm.count("help")) {
 		std::cout << desc << "\n";
 		return nullptr;
 	}
 	conf->kmeans_plus_plus_initialization = vm.count("kpp");
+	conf->yinyang = vm.count("yinyang");
+	conf->input_seed = vm.count("input_seed_file_name");
+	conf->output_seed = vm.count("output_seed_file_name");
 	if (-1 == conf->max_interation) {
 		conf->max_interation = 1;
 		conf->until_converge = true;
@@ -98,7 +102,7 @@ int KMEANS_get_data(std::shared_ptr<KMEANS_config> conf, Eigen::MatrixXf &data, 
 }
 
 int KMEANS_get_seed(std::shared_ptr<KMEANS_config> conf, Eigen::VectorXi &cluster) {
-	FILE *f = fopen(conf->seed_file_name.c_str(), "r");
+	FILE *f = fopen(conf->input_seed_file_name.c_str(), "r");
 	int& N = conf->data_number;
 	int& K = conf->cluster_number;
 	int n;
@@ -145,9 +149,10 @@ void output_cluster(std::shared_ptr<KMEANS_config>conf, Eigen::VectorXi &cluster
 	fout.close();
 }
 
-double compute_loss(std::shared_ptr<KMEANS_config>conf, Eigen::MatrixXf &data, Eigen::VectorXi &cluster, Eigen::MatrixXf &center) {
+double compute_loss(DataMat &data, ClusterVec &cluster, CenterMat &center) {
 	double l = 0;
-	for (int n = 0; n < conf->data_number; ++n) {
+	int N = data.cols();
+	for (int n = 0; n < N; ++n) {
 		l += (data.col(n).cast<double>() - center.col(cluster(n)).cast<double>()).norm();
 	}
 	return l;
@@ -166,4 +171,28 @@ void generate_libsvm_data_file(std::string file_name, std::shared_ptr<KMEANS_con
 	}
 	fout.close();
 
+}
+
+void export_seed(std::string &file_name, CenterMat &center) {
+	std::ofstream fout(file_name.c_str(), std::ios::out|std::ios::binary);
+	int N = center.cols();
+	int K = center.rows();
+	fout << N;
+	fout << K;
+	for (int n = 0; n < N; ++n)
+		for (int k = 0; k < K; ++k)
+			fout << center(k, n);
+	fout.close();
+}
+
+void load_seed(std::string &file_name, int N, int K, CenterMat &center) {
+	std::ifstream fin(file_name.c_str(), std::ios::in|std::ios::binary);
+	if (center.cols() != N || center.rows() != K)
+		center.resize(K, N);
+	fin >> N;
+	fin >> K;
+	for (int n = 0; n < N; ++n)
+		for (int k = 0; k < K; ++k)
+			fin >> center(k, n);
+	fin.close();
 }
