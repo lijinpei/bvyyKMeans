@@ -1,6 +1,6 @@
 #ifndef YINYANG_H
 #define YINYANG_H
 #include "common.hpp"
-int yinyang(DataMat &data, ClusterVec &cluster, CenterMat &center, double precision, int max_interation, bool until_converge);
+int yinyang(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, double precision, int max_iteration, bool until_converge);
 
 #endif

@@ -25,8 +25,8 @@ int choose_center(Eigen::VectorXd &min_dist, Eigen::VectorXi &chosen) {
 int kmeans_plus_plus_initialize(const DataMat &data, CenterMat &center) {
 	int N = data.cols();
 	int K = center.cols();
-	static boost::random::mt19937 gen{static_cast<std::uint32_t>(std::time(0))};
-	static boost::random::uniform_int_distribution<> dist{0, N - 1};
+	boost::random::mt19937 gen{static_cast<std::uint32_t>(std::time(0))};
+	boost::random::uniform_int_distribution<> dist(0, N - 1);
 	Eigen::VectorXi chosen(N);
 	chosen.setZero();
 	int n =  dist(gen);

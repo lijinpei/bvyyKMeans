@@ -5,12 +5,13 @@
 #include <type_traits>
 #include <vector>
 #include <set>
+#include <iostream>
 
 
 // first iteration of yinyangkmeans
 // ran when cluster center are just generated
 // divide center into groups and initialize other values
-int yinyang_first_iteration(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, double precision, Eigen::VectorXi &group, Eigen::MatrixXf &lbg, Eigen::VectorXf &ub, Eigen::MatrixXf center_sum, Eigen::VectorXi &center_count) {
+int yinyang_first_iteration(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, double precision, Eigen::VectorXi &group, Eigen::MatrixXf &lbg, Eigen::VectorXf &ub, Eigen::MatrixXf &center_sum, Eigen::VectorXi &center_count) {
 	int D = data.rows();
 	int N = data.cols();
 	int K = center.cols();
@@ -27,8 +28,10 @@ int yinyang_first_iteration(const DataMat &data, ClusterVec &cluster, CenterMat 
 		for (int k = 0; k < K; ++k)
 			d(k, n) = (center.col(k) - data.col(n)).norm();
 	/* initialize ub, lbg */
-	for (int n = 0; n < N; ++n)
+	for (int n = 0; n < N; ++n) {
+		std::cerr << "d.col(n) " << d.col(n) << std::endl;
 		ub(n) = d.col(n).minCoeff(&cluster(n));
+	}
 	//lbg = std::remove_reference<decltype(lbg)>::type::Constant(G, N, -1);
 	lbg.setConstant(-1);
 	center_count.setZero();
@@ -138,10 +141,25 @@ int yinyang(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, 
 	Eigen::VectorXi center_count(K);	// how many points in a cluster
 
 	yinyang_first_iteration(data, cluster, center, G, precision, group, lbg, ub, center_sum, center_count);
+	std::cerr << "after first iteration " << std::endl;
+	std::cerr << cluster;
+	double ll = compute_loss(data, cluster, center), nl;
 	for (int it = 1; it < max_iteration; ++it) {
 		bool changed = false;
 		changed = changed || update_center(center, group, center_sum, center_count, delta_c, delta_g, precision);
 		changed = changed || yinyang_update_cluster(data, cluster, center, group, centers_in_group, lbg, ub, delta_c, delta_g, center_sum, center_count);
+		if (!changed) {
+			std::cerr << "converges at step " << it << std::endl;
+			break;
+		}
+		if (until_converge)
+			max_iteration += 1;
+		nl = compute_loss(data, cluster, center);
+		if (nl - ll > 1) {
+			std::cerr << "loss increase in step " << it << std::endl;
+		}
+		std::cerr << "step " << it << " loss " << nl << std::endl;
+		ll = nl;
 		if (until_converge)
 			++max_iteration;
 		if (!changed)

@@ -1,5 +1,6 @@
 #include "common.hpp"
 #include "lloyd.hpp"
+#include "yinyang.hpp"
 #include "kmeans_plus_plus.hpp"
 #include <iostream>
 
@@ -26,7 +27,7 @@ int main(int argc, const char* argv[]) {
 			return 0;
 		}
 	} else if (conf->kmeans_plus_plus_initialization) {
-		if (kmeans_plus_plus_initialize(conf, data, center)) {
+		if (kmeans_plus_plus_initialize(data, center)) {
 			std::cerr << "error when kmeans plus plus initialization" << std::endl;
 		}
 	} else
@@ -35,7 +36,7 @@ int main(int argc, const char* argv[]) {
 	//generate_libsvm_data_file("test", conf, data, label);
 	
 	if (conf->yinyang) {
-		yinyang(data, cluster, center, conf->norm_precision, conf->max_interation, conf->until_converge);
+		yinyang(data, cluster, center, conf->group_number, conf->norm_precision, conf->max_interation, conf->until_converge);
 	} else {
 		lloyd(data, cluster, center, conf->norm_precision, conf->max_interation, conf->until_converge); 
 	}

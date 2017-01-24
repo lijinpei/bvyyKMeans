@@ -49,6 +49,7 @@ PConf KMEANS_parse_arg(int argc, const char *argv[]) {
 		("data_dimension,d", po::value<int>(&conf->data_dimension), "dimension of data points")
 		("cluster_number,k", po::value<int>(&conf->cluster_number), "number of clusters")
 		("max_iteration,i", po::value<int>(&conf->max_interation)->default_value(-1), "maximum number of iteration")
+		("group_number,g", po::value<int>(&conf->group_number), "number of center groups in yinyangkmeans, defaults to k / 10")
 		("norm_precision,p", po::value<float>(&conf->norm_precision)->default_value(1e-4), "precision of the norm of the change of centers for judging convergenve")
 		("yinyang,y", "yinyang kmeans")
 		("kpp", "switch on kmeans++ initialization");
@@ -66,6 +67,10 @@ PConf KMEANS_parse_arg(int argc, const char *argv[]) {
 	if (-1 == conf->max_interation) {
 		conf->max_interation = 1;
 		conf->until_converge = true;
+	}
+	if (conf->yinyang) {
+		if (!vm.count("group_number"))
+			conf->group_number = conf->cluster_number / 10;
 	}
 
 	return conf;
@@ -153,6 +158,11 @@ double compute_loss(const DataMat &data, const ClusterVec &cluster, const Center
 	double l = 0;
 	int N = data.cols();
 	for (int n = 0; n < N; ++n) {
+		/*
+		std::cerr << "n " << n << std::endl;
+		std::cerr << "cluster " << std::endl << cluster << std::endl;
+		std::cerr << "cluster(n) " << cluster(n) << std::endl;
+		*/
 		l += (data.col(n).cast<double>() - center.col(cluster(n)).cast<double>()).norm();
 	}
 	return l;

@@ -24,6 +24,7 @@ struct KMEANS_config {
 
 	bool kmeans_plus_plus_initialization;
 	bool yinyang;
+	int group_number;
 };
 
 using DataMat = Eigen::MatrixXf;
@@ -39,8 +40,6 @@ int KMEANS_get_seed(PConf conf, ClusterVec &cluster);
 void generate_libsvm_data_file(std::string file_name, PConf conf, DataMat &data, LabelVec &label);
 int generate_random_initial_cluster(PConf conf, DataMat &data, CenterMat &center);
 void output_cluster(PConf conf, ClusterVec &cluster);
-double compute_loss(DataMat &data, ClusterVec &cluster, CenterMat &center);
+double compute_loss(const DataMat &data, const ClusterVec &cluster, const CenterMat &center);
 
-
-int kmeans_plus_plus_initialize(PConf conf, DataMat &data, CenterMat &center);
 #endif

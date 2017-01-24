@@ -2,6 +2,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include <memory>
+#include <iostream>
 
 
 bool lloyd_update_center(const DataMat &data, const ClusterVec &cluster, CenterMat &center, double precision, Eigen::MatrixXd &workspace1, Eigen::VectorXi &workspace2) {
@@ -63,14 +64,18 @@ bool lloyd_update_cluster(const DataMat &data, ClusterVec &cluster, const Center
 
 int lloyd(const DataMat &data, ClusterVec &cluster, CenterMat &center, double precision, int max_interation, bool until_converge) {
 	int K = center.cols();
-	int D = data.cols();
-	if (D != center.cols()) {
+	int D = data.rows();
+	if (D != center.rows()) {
+		std::cerr << "error checking data dimension in lloyd" << std::endl;
+		std::cerr << "dimension of input data " << D << std::endl;
+		std::cerr << "dimension of center " << center.cols() << std::endl;
 		return 1;
 	}
 	Eigen::MatrixXd workspace1(D, K);
 	Eigen::VectorXi workspace2(K);
 	double ll;
 	double nl;
+	std::cout << "before lloyd iteration" << std::endl;
 	for (int i = 0; i < max_interation; ++i) {
 		bool changed = false;
 		changed = changed || lloyd_update_cluster(data, cluster, center);
@@ -88,5 +93,7 @@ int lloyd(const DataMat &data, ClusterVec &cluster, CenterMat &center, double pr
 		std::cerr << "step " << i << " loss " << nl << std::endl;
 		ll = nl;
 	}
+
+	return 0;
 }
 
