@@ -4,7 +4,7 @@
 #include <memory>
 
 
-bool naive_update_center(DataMat &data, ClusterVec &cluster, CenterMat &center, double precision, Eigen::MatrixXd &workspace1, Eigen::VectorXi &workspace2) {
+bool lloyd_update_center(const DataMat &data, const ClusterVec &cluster, CenterMat &center, double precision, Eigen::MatrixXd &workspace1, Eigen::VectorXi &workspace2) {
 	int N = data.cols();
 	int K = center.cols();
 	double l1 = compute_loss(data, cluster, center);
@@ -32,7 +32,7 @@ bool naive_update_center(DataMat &data, ClusterVec &cluster, CenterMat &center, 
 	return changed;
 }
 
-bool naive_update_cluster(DataMat &data, ClusterVec &cluster, CenterMat &center) {
+bool lloyd_update_cluster(const DataMat &data, ClusterVec &cluster, const CenterMat &center) {
 	double l1 = compute_loss(data, cluster, center);
 	bool changed = false;
 	int N = data.cols();
@@ -73,8 +73,8 @@ int lloyd(const DataMat &data, ClusterVec &cluster, CenterMat &center, double pr
 	double nl;
 	for (int i = 0; i < max_interation; ++i) {
 		bool changed = false;
-		changed = changed || naive_update_cluster(data, cluster, center);
-		changed = changed || naive_update_center(data, cluster, center, precision, workspace1, workspace2);
+		changed = changed || lloyd_update_cluster(data, cluster, center);
+		changed = changed || lloyd_update_center(data, cluster, center, precision, workspace1, workspace2);
 		if (!changed) {
 			std::cerr << "converges at step " << i << std::endl;
 			break;
