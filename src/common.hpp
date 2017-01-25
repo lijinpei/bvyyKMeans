@@ -1,5 +1,5 @@
-#ifndef KMEANS_COMMON_H
-#define KMEANS_COMMON_H
+#ifndef KMEANS_COMMON_HPP
+#define KMEANS_COMMON_HPP
 
 #include <string>
 #include <memory>
