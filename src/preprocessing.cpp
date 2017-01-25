@@ -5,7 +5,7 @@
 
 int KMEANS_read_data(const std::string &file_name, std::vector<std::vector<double>> &data, std::vector<double> &label, int D, bool have_label, bool libsvm_format) {
 	std::ifstream fin(file_name.c_str());
-	while (!fin.eof()) {
+	while (EOF != fin.peek()) {
 		char c;
 		if (have_label) {
 			double tmp_d;
@@ -23,7 +23,8 @@ int KMEANS_read_data(const std::string &file_name, std::vector<std::vector<doubl
 				int d;
 				double v;
 				fin >> d >> c >> v;
-				tmp_v[d] = v;
+				fin.get(c);
+				tmp_v[d - 1] = v;
 
 			}
 		else {
@@ -42,15 +43,17 @@ int KMEANS_read_data(const std::string &file_name, std::vector<std::vector<doubl
 }
 
 int KMEANS_write_data(std::string file_name, std::vector<std::vector<double>> &data, std::vector<double> &label, int D, bool have_label, bool libsvm_format) {
+	std::cerr << "start output to file " << file_name << std::endl;
 	std::ofstream fout(file_name.c_str());
-	fout.open(file_name.c_str());
 	int N = data.size();
+	std::cerr << "data number " << N << std::endl;
+	std::cerr << "data dimension " << D << std::endl;
 	for (int n = 0; n < N; ++n) {
 		if (have_label)
 			fout << label[n] << ' ';
 		if (libsvm_format) {
 			for (int d = 0; d < D; ++d) {
-				fout << d << ':' << data[n][d] << ' ';
+				fout << d + 1 << ':' << data[n][d] << ' ';
 			}
 		} else {
 			for (int d = 0; d < D; ++d) {
