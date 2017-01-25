@@ -3,11 +3,9 @@
 
 #include <string>
 #include <vector>
-#include <functional>
-#include "common.hpp"
 
-int KMEANS_read_data(const std::string &file_name, DataMat &data, LabelVec &label, int N, int D, bool have_label = false, bool libsvm_format = false);
-int KMEANS_write_data(std::vector<std::reference_wrapper<const std::string>> file_names, const DataMat &data, const LabelVec &label, bool have_label = false, bool libsvm_format = false);
-int KMEANS_scale_data(DataMat &data, Eigen::VectorXf &target_min, Eigen::VectorXf &targe_max);
+int KMEANS_read_data(const std::string &file_name, std::vector<std::vector<double>> &data, std::vector<double> &label, int D, bool have_label = false, bool libsvm_format = false);
+int KMEANS_write_data(const std::string file_names, std::vector<std::vector<double>> &data, std::vector<double> &label, int D, bool have_label = false, bool libsvm_format = false);
+int KMEANS_scale_data(std::vector<std::vector<double>> &data, std::vector<double> &target_min, std::vector<double> &targe_max, int D);
 
 #endif

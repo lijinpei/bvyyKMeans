@@ -13,8 +13,6 @@
 #include <fstream>
 #include <iomanip>
 
-namespace po = boost::program_options;
-
 std::ostream& operator<<(std::ostream& os, const KMEANS_config& kc) {
 	os << "data file name: " << kc.data_file_name << std::endl;
 	os << "data number: " << kc.data_number << std::endl;
@@ -37,6 +35,8 @@ std::ostream& operator<<(std::ostream& os, const KMEANS_config& kc) {
 }
 
 PConf KMEANS_parse_arg(int argc, const char *argv[]) {
+	namespace po = boost::program_options;
+
 	std::shared_ptr<KMEANS_config> conf(new KMEANS_config);
 	po::options_description desc("Allowed options");
 	desc.add_options()
