@@ -91,8 +91,19 @@ bool yinyang_update_cluster(const DataMat &data, ClusterVec &cluster, CenterMat 
 	int G = lbg.rows();
 	for (int n = 0; n < N; ++n) {
 		ub(n) += delta_c(cluster(n));
+/*
 		Eigen::VectorXf old_lbg(lbg.col(n));
 		lbg.col(n) -= delta_g;
+*/
+		Eigen::VectorXf old_lbg(G);
+		old_lbg = lbg.col(n);
+		for (int g = 0; g < G; ++g) {
+			if (lbg(g, n) < 0)
+				continue;
+			lbg(g, n) = lbg(g, n) - delta_g(g);
+			if (lbg(g, n) < 0)
+				lbg(g, n) = 0;
+		}
 		/* Global filtering */
 		float min_lbg = -1;
 		for (int g = 0; g < G; ++g) {
@@ -102,7 +113,7 @@ bool yinyang_update_cluster(const DataMat &data, ClusterVec &cluster, CenterMat 
 			if (min_lbg < 0 || min_lbg > tmp_lbg)
 				min_lbg = tmp_lbg;
 		}
-		if (min_lbg > ub(n))
+		if (min_lbg < 0 || min_lbg > ub(n))
 			continue;
 		ub(n) = (data.col(n) - center.col(cluster(n))).norm();
 		if (min_lbg > ub(n))
@@ -110,22 +121,31 @@ bool yinyang_update_cluster(const DataMat &data, ClusterVec &cluster, CenterMat 
 		//std::cerr << "pass global filtering ";
 		/* Group filtering */
 		for (int g = 0; g < G; ++g) {
-			if (lbg(g, n) > ub(n))
+			if (lbg(g, n) < 0 || lbg(g, n) > ub(n))
 				continue;
+			lbg(g, n) = -1;
 			//std::cerr << "pass group filtering ";
 			/* Local filtering */
 			for (int c:centers_in_group[g]) {
 				//std::cerr << "start local filtering ";
+		//std::cerr << "test1" << std::endl;
 				if (c == cluster(n))
 					continue;
+		//std::cerr << "test2" << std::endl;
+				if (lbg(g, n) >= 0 && old_lbg(g) - delta_c(c) >= lbg(g, n))
+					continue;
+				/*
 				if (old_lbg(g) - delta_c(c) > ub(n))
 					continue;
+				*/
 				float tmp_d = (data.col(n) - center.col(c)).norm();
 				if (tmp_d < ub(n)) {
 					//std::cerr << "pass local filtering ";
 					changed = true;
 					int l = cluster(n);
-					lbg(group(l), n) = ub(n);
+					float tmp_lbg = lbg(group(l), n);
+					if (tmp_lbg < 0 || tmp_lbg > ub(n))
+						lbg(group(l), n) = ub(n);
 					cluster(n) = c;
 					ub(n) = tmp_d;
 					center_count(l) -= 1;
@@ -133,7 +153,7 @@ bool yinyang_update_cluster(const DataMat &data, ClusterVec &cluster, CenterMat 
 					center_sum.col(l) -= data.col(n);
 					center_sum.col(c) += data.col(n);
 				} else {
-					if (tmp_d < lbg(g, n))
+					if (lbg(g, n) < 0 || tmp_d < lbg(g, n))
 						lbg(g, n) = tmp_d;
 				}
 			}
