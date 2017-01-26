@@ -44,7 +44,7 @@ int main(int argc, const char* argv[]) {
 		KMeans_export_seed(conf->output_seed_file_name, center);
 
 	if (conf->yinyang) {
-		yinyang(data, cluster, center, conf->group_number, conf->norm_precision, conf->max_interation, conf->until_converge);
+		yinyang(data, cluster, center, conf->group_number, conf->norm_precision, conf->max_interation, conf->until_converge, conf->debug);
 	} else {
 		lloyd(data, cluster, center, conf->norm_precision, conf->max_interation, conf->until_converge); 
 	}

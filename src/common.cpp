@@ -51,6 +51,7 @@ PConf KMeans_parse_arg(int argc, const char *argv[]) {
 		("max_iteration,i", po::value<int>(&conf->max_interation)->default_value(-1), "maximum number of iteration")
 		("group_number,g", po::value<int>(&conf->group_number), "number of center groups in yinyangkmeans, defaults to k / 10")
 		("norm_precision,p", po::value<float>(&conf->norm_precision)->default_value(1e-4), "precision of the norm of the change of centers for judging convergenve")
+		("debug", "switch on this option to compare yinyang kmeans with lloyd kmeans")
 		("yinyang,y", "yinyang kmeans")
 		("kpp", "switch on kmeans++ initialization");
 	po::variables_map vm;
@@ -64,6 +65,7 @@ PConf KMeans_parse_arg(int argc, const char *argv[]) {
 	conf->yinyang = vm.count("yinyang");
 	conf->input_seed = vm.count("input_seed_file_name");
 	conf->output_seed = vm.count("output_seed_file_name");
+	conf->debug = vm.count("debug");
 	if (-1 == conf->max_interation) {
 		conf->max_interation = 2;
 		conf->until_converge = true;

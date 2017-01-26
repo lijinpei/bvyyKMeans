@@ -25,6 +25,8 @@ struct KMeans_config {
 	bool kmeans_plus_plus_initialization;
 	bool yinyang;
 	int group_number;
+
+	bool debug;
 };
 
 using DataMat = Eigen::MatrixXf;

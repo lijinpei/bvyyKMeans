@@ -6,6 +6,7 @@
 #include <vector>
 #include <set>
 #include <iostream>
+#include <cmath>
 
 
 // first iteration of yinyangkmeans
@@ -25,6 +26,7 @@ int yinyang_first_iteration(const DataMat &data, ClusterVec &cluster, CenterMat 
 	lloyd_update_cluster(data, cluster, center);
 	lloyd_update_center(data, cluster, center, precision, workspace1, workspace2);
 	lloyd_update_cluster(data, cluster, center);
+	std::cerr << "step 0 loss " << compute_loss(data, cluster, center) << std::endl;
 	Eigen::MatrixXd d(K, N);
 	for (int n = 0; n < N; ++n)
 		for (int k = 0; k < K; ++k)
@@ -141,7 +143,28 @@ bool yinyang_update_cluster(const DataMat &data, ClusterVec &cluster, CenterMat 
 	return changed;
 }
 
-int yinyang(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, double precision, int max_iteration, bool until_converge) {
+int cmp_center(CenterMat &center, CenterMat &center1, double precision) {
+	int K = center.cols();
+	int D = center.rows();
+	for (int k = 0; k < K; ++k) {
+		for (int d = 0; d < D; ++d)
+			if (std::abs(center(d, k) - center1(d, k)) > precision) {
+				return 1;
+			}
+	}
+
+	return 0;
+}
+
+int cmp_cluster(ClusterVec &cluster, ClusterVec &cluster1) {
+	int N = cluster.rows();
+	for (int n = 0; n < N; ++n)
+		if (cluster(n) != cluster1(n))
+			return 1;
+	return 0;
+}
+
+int yinyang(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, double precision, int max_iteration, bool until_converge, bool debug) {
 	int N = data.cols();
 	int D = data.rows();
 	int K = center.cols();
@@ -155,6 +178,16 @@ int yinyang(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, 
 	Eigen::MatrixXf center_sum(D, K);	// sum of all points in certain cluster
 	Eigen::VectorXi center_count(K);	// how many points in a cluster
 
+	ClusterVec cluster1;
+	CenterMat center1;
+	Eigen::MatrixXd workspace1;
+	Eigen::VectorXi workspace2;
+	if (debug) {
+		cluster1.resize(N);
+		center1.resize(D, K);
+		workspace1.resize(D, N);
+		workspace2.resize(K);
+	}
 	yinyang_first_iteration(data, cluster, center, G, precision, group, lbg, ub, center_sum, center_count, centers_in_group);
 	//std::cerr << cluster;
 	//std::cerr << "max iteration " << max_iteration << std::endl;
@@ -168,6 +201,12 @@ int yinyang(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, 
 			std::cerr << "loss increase in update center in step " << it << std::endl;
 		}
 		ll = nl;
+		if (debug) {
+			lloyd_update_center(data, cluster, center1, precision, workspace1, workspace2);
+			if (cmp_center(center, center1, precision)) {
+				std::cerr << "different center in step " << it << std::endl;
+			}
+		}
 		changed2 = yinyang_update_cluster(data, cluster, center, group, centers_in_group, lbg, ub, delta_c, delta_g, center_sum, center_count);
 		//std::cerr << "cluster changed " << changed2 << std::endl;
 		nl = compute_loss(data, cluster, center);
@@ -175,6 +214,12 @@ int yinyang(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, 
 			std::cerr << "loss increase in update cluster in step " << it << std::endl;
 		}
 		ll = nl;
+		if (debug) {
+			lloyd_update_cluster(data, cluster1, center);
+			if (cmp_cluster(cluster, cluster1)) {
+				std::cerr << "different cluster in step " << it << std::endl;
+			}
+		}
 		if (!changed1 && !changed2) {
 			std::cerr << "converges at step " << it << std::endl;
 			break;
