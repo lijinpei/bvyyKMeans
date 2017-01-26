@@ -6,7 +6,7 @@
 
 
 bool lloyd_update_center(const DataMat &data, const ClusterVec &cluster, CenterMat &center, double precision, Eigen::MatrixXd &workspace1, Eigen::VectorXi &workspace2) {
-	std::cerr << "start lloyd update center" << std::endl;
+	//std::cerr << "start lloyd update center" << std::endl;
 	int N = data.cols();
 	int K = center.cols();
 	double l1 = compute_loss(data, cluster, center);
@@ -31,12 +31,12 @@ bool lloyd_update_center(const DataMat &data, const ClusterVec &cluster, CenterM
 	double l2 = compute_loss(data, cluster, center);
 	if (l2 - l1 > 1)
 		std::cerr << "Loss increases in update center" << std::endl;
-	std::cerr << "finished lloyd update center" << std::endl;
+	//std::cerr << "finished lloyd update center" << std::endl;
 	return changed;
 }
 
 bool lloyd_update_cluster(const DataMat &data, ClusterVec &cluster, const CenterMat &center) {
-	std::cerr << "start lloyd update cluster" << std::endl;
+	//std::cerr << "start lloyd update cluster" << std::endl;
 	double l1 = compute_loss(data, cluster, center);
 	bool changed = false;
 	int N = data.cols();
@@ -63,7 +63,7 @@ bool lloyd_update_cluster(const DataMat &data, ClusterVec &cluster, const Center
 	double l2 = compute_loss(data, cluster, center);
 	if (l2 > l1)
 		std::cerr << "Loss increases in update cluster" << std::endl;
-	std::cerr << "finished lloyd update cluster" << std::endl;
+	//std::cerr << "finished lloyd update cluster" << std::endl;
 	return changed;
 }
 
