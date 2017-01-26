@@ -13,7 +13,7 @@
 #include <fstream>
 #include <iomanip>
 
-std::ostream& operator<<(std::ostream& os, const KMEANS_config& kc) {
+std::ostream& operator<<(std::ostream& os, const KMeans_config& kc) {
 	os << "data file name: " << kc.data_file_name << std::endl;
 	os << "data number: " << kc.data_number << std::endl;
 	os << "data dimension: " << kc.data_dimension << std::endl;
@@ -34,10 +34,10 @@ std::ostream& operator<<(std::ostream& os, const KMEANS_config& kc) {
 	return os;
 }
 
-PConf KMEANS_parse_arg(int argc, const char *argv[]) {
+PConf KMeans_parse_arg(int argc, const char *argv[]) {
 	namespace po = boost::program_options;
 
-	std::shared_ptr<KMEANS_config> conf(new KMEANS_config);
+	std::shared_ptr<KMeans_config> conf(new KMeans_config);
 	po::options_description desc("Allowed options");
 	desc.add_options()
 		("help,h", "produce help message")
@@ -76,7 +76,7 @@ PConf KMEANS_parse_arg(int argc, const char *argv[]) {
 	return conf;
 }
 
-int KMEANS_get_data(std::shared_ptr<KMEANS_config> conf, Eigen::MatrixXf &data, Eigen::VectorXf &label) {
+int KMeans_get_data(std::shared_ptr<KMeans_config> conf, Eigen::MatrixXf &data, Eigen::VectorXf &label) {
 	FILE* f = fopen(conf->data_file_name.c_str(), "r");
 	int& N = conf->data_number;
 	int& D = conf->data_dimension;
@@ -105,8 +105,8 @@ int KMEANS_get_data(std::shared_ptr<KMEANS_config> conf, Eigen::MatrixXf &data, 
 	}
 	return 0;
 }
-
-int KMEANS_get_seed(std::shared_ptr<KMEANS_config> conf, Eigen::VectorXi &cluster) {
+/*
+int KMeans_get_seed(std::shared_ptr<KMeans_config> conf, Eigen::VectorXi &cluster) {
 	FILE *f = fopen(conf->input_seed_file_name.c_str(), "r");
 	int& N = conf->data_number;
 	int& K = conf->cluster_number;
@@ -128,7 +128,7 @@ int KMEANS_get_seed(std::shared_ptr<KMEANS_config> conf, Eigen::VectorXi &cluste
 
 	return 0;
 }
-
+*/
 int generate_random_initial_cluster(PConf conf, DataMat &data, CenterMat &center) {
 	boost::random::mt19937 gen{static_cast<std::uint32_t>(std::time(0))};
 	boost::random::uniform_int_distribution<> dist{0, conf->cluster_number - 1};
@@ -148,10 +148,12 @@ int generate_random_initial_cluster(PConf conf, DataMat &data, CenterMat &center
 	return 0;
 }
 
-void output_cluster(std::shared_ptr<KMEANS_config>conf, Eigen::VectorXi &cluster) {
+int output_cluster(std::shared_ptr<KMeans_config>conf, Eigen::VectorXi &cluster) {
 	std::ofstream fout(conf->output_file_name);
 	fout << cluster << std::endl;
 	fout.close();
+
+	return 0;
 }
 
 double compute_loss(const DataMat &data, const ClusterVec &cluster, const CenterMat &center) {
@@ -170,7 +172,7 @@ double compute_loss(const DataMat &data, const ClusterVec &cluster, const Center
 	return l;
 }
 
-void generate_libsvm_data_file(std::string file_name, std::shared_ptr<KMEANS_config> conf, Eigen::MatrixXf &data, Eigen::VectorXf &label) {
+int generate_libsvm_data_file(std::string file_name, std::shared_ptr<KMeans_config> conf, Eigen::MatrixXf &data, Eigen::VectorXf &label) {
 	std::ofstream fout(file_name);
 	fout << std::fixed << std::setprecision(6);
 	int &N = conf->data_number;
@@ -183,28 +185,34 @@ void generate_libsvm_data_file(std::string file_name, std::shared_ptr<KMEANS_con
 	}
 	fout.close();
 
+	return 0;
 }
 
-void export_seed(std::string &file_name, CenterMat &center) {
+int KMeans_export_seed(std::string &file_name, CenterMat &center) {
 	std::ofstream fout(file_name.c_str(), std::ios::out|std::ios::binary);
-	int N = center.cols();
-	int K = center.rows();
-	fout << N;
-	fout << K;
-	for (int n = 0; n < N; ++n)
-		for (int k = 0; k < K; ++k)
-			fout << center(k, n);
+	// warning: don't do this across machines
+	int K = center.cols(), D = center.rows();
+	fout.write((char*)&K, sizeof(int));
+	fout.write((char*)&D, sizeof(int));
+	for (int k = 0; k < K; ++k)
+		for (int d = 0; d < D; ++d)
+			fout.write((char*)&center(d, k), sizeof(double));
 	fout.close();
+
+	return 0;
 }
 
-void load_seed(std::string &file_name, int N, int K, CenterMat &center) {
+int KMeans_load_seed(std::string &file_name, int &K, int &D, CenterMat &center) {
 	std::ifstream fin(file_name.c_str(), std::ios::in|std::ios::binary);
-	if (center.cols() != N || center.rows() != K)
-		center.resize(K, N);
-	fin >> N;
-	fin >> K;
-	for (int n = 0; n < N; ++n)
-		for (int k = 0; k < K; ++k)
-			fin >> center(k, n);
+	// warning: don't do this across machines
+	fin.read((char*)&K, sizeof(int));
+	fin.read((char*)&D, sizeof(int));
+	std::cerr << "K: " << K << "D: " << D << std::endl;
+	center.resize(D, K);
+	for (int k = 0; k < K; ++k)
+		for (int d = 0; d < D; ++d)
+			fin.read((char*)&center(d, k), sizeof(double));
 	fin.close();
+
+	return 0;
 }

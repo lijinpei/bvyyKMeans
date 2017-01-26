@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
 	std::vector<double> label;
 	for (auto file_name: input_file_names) {
 		std::cerr << file_name << std::endl;
-		KMEANS_read_data(file_name, data, label, D, have_label, input_libsvm_format);
+		KMeans_read_data(file_name, data, label, D, have_label, input_libsvm_format);
 	}
 	std::cerr << "finished read input filles" << std::endl;
 	if (need_scale) {
@@ -70,9 +70,9 @@ int main(int argc, char* argv[]) {
 			target_min[d] = tmp_target_min;
 			target_max[d] = tmp_target_max;
 		}
-		KMEANS_scale_data(data, target_min, target_max, D);
+		KMeans_scale_data(data, target_min, target_max, D);
 	}
-	KMEANS_write_data(output_file_name, data, label, D, have_label, output_libsvm_format);
+	KMeans_write_data(output_file_name, data, label, D, have_label, output_libsvm_format);
 
 	return 0;
 }

@@ -3,7 +3,7 @@
 #include <fstream>
 #include <vector>
 
-int KMEANS_read_data(const std::string &file_name, std::vector<std::vector<double>> &data, std::vector<double> &label, int D, bool have_label, bool libsvm_format) {
+int KMeans_read_data(const std::string &file_name, std::vector<std::vector<double>> &data, std::vector<double> &label, int D, bool have_label, bool libsvm_format) {
 	std::ifstream fin(file_name.c_str());
 	while (EOF != fin.peek()) {
 		char c;
@@ -42,7 +42,7 @@ int KMEANS_read_data(const std::string &file_name, std::vector<std::vector<doubl
 	return 0;
 }
 
-int KMEANS_write_data(std::string file_name, std::vector<std::vector<double>> &data, std::vector<double> &label, int D, bool have_label, bool libsvm_format) {
+int KMeans_write_data(std::string file_name, std::vector<std::vector<double>> &data, std::vector<double> &label, int D, bool have_label, bool libsvm_format) {
 	std::cerr << "start output to file " << file_name << std::endl;
 	std::ofstream fout(file_name.c_str());
 	int N = data.size();
@@ -67,7 +67,7 @@ int KMEANS_write_data(std::string file_name, std::vector<std::vector<double>> &d
 	return 0;
 }
 
-int KMEANS_scale_data(std::vector<std::vector<double>> &data, std::vector<double> &target_min, std::vector<double> &target_max, int D) {
+int KMeans_scale_data(std::vector<std::vector<double>> &data, std::vector<double> &target_min, std::vector<double> &target_max, int D) {
 	std::vector<double> input_min(D), input_max(D);
 	for (int d = 0; d < D; ++d) {
 		input_min[d] = data[0][d];
