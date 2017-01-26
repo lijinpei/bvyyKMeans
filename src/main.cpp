@@ -34,7 +34,6 @@ int main(int argc, const char* argv[]) {
 		generate_random_initial_cluster(conf, data, center);
 
 	if (conf->yinyang) {
-		std::cerr << "run yinyang kmeans" << std::endl;
 		yinyang(data, cluster, center, conf->group_number, conf->norm_precision, conf->max_interation, conf->until_converge);
 	} else {
 		lloyd(data, cluster, center, conf->norm_precision, conf->max_interation, conf->until_converge); 

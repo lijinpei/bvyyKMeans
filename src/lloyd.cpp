@@ -82,12 +82,15 @@ int lloyd(const DataMat &data, ClusterVec &cluster, CenterMat &center, double pr
 	double ll;
 	double nl;
 	cluster.setZero();
+	lloyd_update_cluster(data, cluster, center);
 	for (int i = 0; i < max_interation; ++i) {
-		std::cerr << "start iteration " << i << std::endl;
-		bool changed = false;
-		changed = changed || lloyd_update_cluster(data, cluster, center);
-		changed = changed || lloyd_update_center(data, cluster, center, precision, workspace1, workspace2);
-		if (!changed) {
+		//std::cerr << "start iteration " << i << std::endl;
+		bool changed1, changed2;
+		changed1 = lloyd_update_center(data, cluster, center, precision, workspace1, workspace2);
+		//std::cerr << "center changed " << changed1 << std::endl;
+		changed2 = lloyd_update_cluster(data, cluster, center);
+		//std::cerr << "cluster changed " << changed2 << std::endl;
+		if (!changed1 && !changed2) {
 			std::cerr << "converges at step " << i << std::endl;
 			break;
 		}

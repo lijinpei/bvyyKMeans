@@ -11,7 +11,7 @@
 // first iteration of yinyangkmeans
 // ran when cluster center are just generated
 // divide center into groups and initialize other values
-int yinyang_first_iteration(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, double precision, Eigen::VectorXi &group, Eigen::MatrixXf &lbg, Eigen::VectorXf &ub, Eigen::MatrixXf &center_sum, Eigen::VectorXi &center_count) {
+int yinyang_first_iteration(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, double precision, Eigen::VectorXi &group, Eigen::MatrixXf &lbg, Eigen::VectorXf &ub, Eigen::MatrixXf &center_sum, Eigen::VectorXi &center_count, std::vector<std::set<int>> &centers_in_group) {
 	std::cerr << "start yinyang first iteration" << std::endl;
 	int D = data.rows();
 	int N = data.cols();
@@ -24,6 +24,7 @@ int yinyang_first_iteration(const DataMat &data, ClusterVec &cluster, CenterMat 
 	Eigen::VectorXi workspace2(K);
 	lloyd_update_cluster(data, cluster, center);
 	lloyd_update_center(data, cluster, center, precision, workspace1, workspace2);
+	lloyd_update_cluster(data, cluster, center);
 	Eigen::MatrixXd d(K, N);
 	for (int n = 0; n < N; ++n)
 		for (int k = 0; k < K; ++k)
@@ -36,6 +37,7 @@ int yinyang_first_iteration(const DataMat &data, ClusterVec &cluster, CenterMat 
 	//lbg = std::remove_reference<decltype(lbg)>::type::Constant(G, N, -1);
 	lbg.setConstant(-1);
 	center_count.setZero();
+	center_sum.setZero();
 	for (int n = 0; n < N; ++n)
 		for (int k = 0; k < K; ++k)
 			if (k != cluster(n)) {
@@ -48,12 +50,15 @@ int yinyang_first_iteration(const DataMat &data, ClusterVec &cluster, CenterMat 
 				center_count(k) += 1;
 				center_sum.col(k) += data.col(n);
 			}
+	centers_in_group.resize(G);
+	for (int k = 0; k < K; ++k)
+		centers_in_group[group[k]].insert(k);
 	std::cerr << "finished yinyang first iteration" << std::endl;
 	return 0;
 }
 
 bool update_center(CenterMat &center, Eigen::VectorXi &group, Eigen::MatrixXf &center_sum, Eigen::VectorXi &center_count, Eigen::VectorXf &delta_c, Eigen::VectorXf &delta_g, double precision) {
-	std::cerr << "start update_center" << std::endl;
+	//std::cerr << "start update_center" << std::endl;
 	bool changed = false;
 	Eigen::VectorXf tmp_center;
 	int K = center.cols();
@@ -73,12 +78,12 @@ bool update_center(CenterMat &center, Eigen::VectorXi &group, Eigen::MatrixXf &c
 		if (dg < dc)
 			delta_g(g) = dc;
 	}
-	std::cerr << "finished update_center" << std::endl;
+	//std::cerr << "finished update_center" << std::endl;
 	return changed;
 }
 
 bool yinyang_update_cluster(const DataMat &data, ClusterVec &cluster, CenterMat &center, Eigen::VectorXi &group, std::vector<std::set<int>> &centers_in_group, Eigen::MatrixXf &lbg, Eigen::VectorXf &ub, Eigen::VectorXf &delta_c, Eigen::VectorXf &delta_g, Eigen::MatrixXf &center_sum, Eigen::VectorXi &center_count) {
-	std::cerr << "start yinyang_update_cluster" << std::endl;
+	//std::cerr << "start yinyang_update_cluster" << std::endl;
 	bool changed = false;
 	int N = data.cols();
 	int G = lbg.rows();
@@ -100,18 +105,22 @@ bool yinyang_update_cluster(const DataMat &data, ClusterVec &cluster, CenterMat 
 		ub(n) = (data.col(n) - center.col(cluster(n))).norm();
 		if (min_lbg > ub(n))
 			continue;
+		//std::cerr << "pass global filtering ";
 		/* Group filtering */
 		for (int g = 0; g < G; ++g) {
 			if (lbg(g, n) > ub(n))
 				continue;
+			//std::cerr << "pass group filtering ";
 			/* Local filtering */
 			for (int c:centers_in_group[g]) {
+				//std::cerr << "start local filtering ";
 				if (c == cluster(n))
 					continue;
 				if (old_lbg(g) - delta_c(c) > ub(n))
 					continue;
 				float tmp_d = (data.col(n) - center.col(c)).norm();
 				if (tmp_d < ub(n)) {
+					//std::cerr << "pass local filtering ";
 					changed = true;
 					int l = cluster(n);
 					lbg(group(l), n) = ub(n);
@@ -128,7 +137,7 @@ bool yinyang_update_cluster(const DataMat &data, ClusterVec &cluster, CenterMat 
 			}
 		}
 	}
-	std::cerr << "finished yinyang_update_cluster" << std::endl;
+	//std::cerr << "finished yinyang_update_cluster" << std::endl;
 	return changed;
 }
 
@@ -146,15 +155,27 @@ int yinyang(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, 
 	Eigen::MatrixXf center_sum(D, K);	// sum of all points in certain cluster
 	Eigen::VectorXi center_count(K);	// how many points in a cluster
 
-	yinyang_first_iteration(data, cluster, center, G, precision, group, lbg, ub, center_sum, center_count);
+	yinyang_first_iteration(data, cluster, center, G, precision, group, lbg, ub, center_sum, center_count, centers_in_group);
 	//std::cerr << cluster;
-	std::cerr << "max iteration " << max_iteration << std::endl;
+	//std::cerr << "max iteration " << max_iteration << std::endl;
 	double ll = compute_loss(data, cluster, center), nl;
 	for (int it = 1; it < max_iteration; ++it) {
-		bool changed = false;
-		changed = changed || update_center(center, group, center_sum, center_count, delta_c, delta_g, precision);
-		changed = changed || yinyang_update_cluster(data, cluster, center, group, centers_in_group, lbg, ub, delta_c, delta_g, center_sum, center_count);
-		if (!changed) {
+		bool changed1, changed2;
+		changed1 = update_center(center, group, center_sum, center_count, delta_c, delta_g, precision);
+		//std::cerr << "center changed " << changed1 << std::endl;
+		nl = compute_loss(data, cluster, center);
+		if (nl - ll > 1) {
+			std::cerr << "loss increase in update center in step " << it << std::endl;
+		}
+		ll = nl;
+		changed2 = yinyang_update_cluster(data, cluster, center, group, centers_in_group, lbg, ub, delta_c, delta_g, center_sum, center_count);
+		//std::cerr << "cluster changed " << changed2 << std::endl;
+		nl = compute_loss(data, cluster, center);
+		if (nl - ll > 1) {
+			std::cerr << "loss increase in update cluster in step " << it << std::endl;
+		}
+		ll = nl;
+		if (!changed1 && !changed2) {
 			std::cerr << "converges at step " << it << std::endl;
 			break;
 		}
@@ -168,8 +189,6 @@ int yinyang(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, 
 		ll = nl;
 		if (until_converge)
 			++max_iteration;
-		if (!changed)
-			break;
 	}
 
 	return 0;
