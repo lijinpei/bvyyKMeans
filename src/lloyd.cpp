@@ -6,6 +6,7 @@
 
 
 bool lloyd_update_center(const DataMat &data, const ClusterVec &cluster, CenterMat &center, double precision, Eigen::MatrixXd &workspace1, Eigen::VectorXi &workspace2) {
+	std::cerr << "start lloyd update center" << std::endl;
 	int N = data.cols();
 	int K = center.cols();
 	double l1 = compute_loss(data, cluster, center);
@@ -30,15 +31,18 @@ bool lloyd_update_center(const DataMat &data, const ClusterVec &cluster, CenterM
 	double l2 = compute_loss(data, cluster, center);
 	if (l2 - l1 > 1)
 		std::cerr << "Loss increases in update center" << std::endl;
+	std::cerr << "finished lloyd update center" << std::endl;
 	return changed;
 }
 
 bool lloyd_update_cluster(const DataMat &data, ClusterVec &cluster, const CenterMat &center) {
+	std::cerr << "start lloyd update cluster" << std::endl;
 	double l1 = compute_loss(data, cluster, center);
 	bool changed = false;
 	int N = data.cols();
 	int K = center.cols();
 	for (int n = 0; n < N; ++n) {
+		//std::cerr << "lloyd update cluster iteration " << n << std::endl;
 		int mp = 0;
 		float mv = (data.col(n) - center.col(0)).squaredNorm();
 		for (int k = 1; k < K; ++k) {
@@ -59,10 +63,12 @@ bool lloyd_update_cluster(const DataMat &data, ClusterVec &cluster, const Center
 	double l2 = compute_loss(data, cluster, center);
 	if (l2 > l1)
 		std::cerr << "Loss increases in update cluster" << std::endl;
+	std::cerr << "finished lloyd update cluster" << std::endl;
 	return changed;
 }
 
 int lloyd(const DataMat &data, ClusterVec &cluster, CenterMat &center, double precision, int max_interation, bool until_converge) {
+	std::cerr << "start lloyd iteration" << std::endl;
 	int K = center.cols();
 	int D = data.rows();
 	if (D != center.rows()) {
@@ -75,8 +81,9 @@ int lloyd(const DataMat &data, ClusterVec &cluster, CenterMat &center, double pr
 	Eigen::VectorXi workspace2(K);
 	double ll;
 	double nl;
-	std::cout << "before lloyd iteration" << std::endl;
+	cluster.setZero();
 	for (int i = 0; i < max_interation; ++i) {
+		std::cerr << "start iteration " << i << std::endl;
 		bool changed = false;
 		changed = changed || lloyd_update_cluster(data, cluster, center);
 		changed = changed || lloyd_update_center(data, cluster, center, precision, workspace1, workspace2);

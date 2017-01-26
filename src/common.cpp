@@ -65,7 +65,7 @@ PConf KMEANS_parse_arg(int argc, const char *argv[]) {
 	conf->input_seed = vm.count("input_seed_file_name");
 	conf->output_seed = vm.count("output_seed_file_name");
 	if (-1 == conf->max_interation) {
-		conf->max_interation = 1;
+		conf->max_interation = 2;
 		conf->until_converge = true;
 	}
 	if (conf->yinyang) {
@@ -155,6 +155,7 @@ void output_cluster(std::shared_ptr<KMEANS_config>conf, Eigen::VectorXi &cluster
 }
 
 double compute_loss(const DataMat &data, const ClusterVec &cluster, const CenterMat &center) {
+	//std::cerr << "start compute loss" << std::endl;
 	double l = 0;
 	int N = data.cols();
 	for (int n = 0; n < N; ++n) {
@@ -165,6 +166,7 @@ double compute_loss(const DataMat &data, const ClusterVec &cluster, const Center
 		*/
 		l += (data.col(n).cast<double>() - center.col(cluster(n)).cast<double>()).norm();
 	}
+	//std::cerr << "finished compute loss" << std::endl;
 	return l;
 }
 

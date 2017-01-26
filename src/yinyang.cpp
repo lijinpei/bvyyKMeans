@@ -12,6 +12,7 @@
 // ran when cluster center are just generated
 // divide center into groups and initialize other values
 int yinyang_first_iteration(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, double precision, Eigen::VectorXi &group, Eigen::MatrixXf &lbg, Eigen::VectorXf &ub, Eigen::MatrixXf &center_sum, Eigen::VectorXi &center_count) {
+	std::cerr << "start yinyang first iteration" << std::endl;
 	int D = data.rows();
 	int N = data.cols();
 	int K = center.cols();
@@ -29,7 +30,7 @@ int yinyang_first_iteration(const DataMat &data, ClusterVec &cluster, CenterMat 
 			d(k, n) = (center.col(k) - data.col(n)).norm();
 	/* initialize ub, lbg */
 	for (int n = 0; n < N; ++n) {
-		std::cerr << "d.col(n) " << d.col(n) << std::endl;
+		//std::cerr << "d.col(n) " << d.col(n) << std::endl;
 		ub(n) = d.col(n).minCoeff(&cluster(n));
 	}
 	//lbg = std::remove_reference<decltype(lbg)>::type::Constant(G, N, -1);
@@ -47,15 +48,17 @@ int yinyang_first_iteration(const DataMat &data, ClusterVec &cluster, CenterMat 
 				center_count(k) += 1;
 				center_sum.col(k) += data.col(n);
 			}
+	std::cerr << "finished yinyang first iteration" << std::endl;
 	return 0;
 }
 
 bool update_center(CenterMat &center, Eigen::VectorXi &group, Eigen::MatrixXf &center_sum, Eigen::VectorXi &center_count, Eigen::VectorXf &delta_c, Eigen::VectorXf &delta_g, double precision) {
+	std::cerr << "start update_center" << std::endl;
 	bool changed = false;
 	Eigen::VectorXf tmp_center;
 	int K = center.cols();
 	delta_g.setConstant(-1);
-	for (int k = 0; k < K; ++K) {
+	for (int k = 0; k < K; ++k) {
 		int cc = center_count(k);
 		if (!cc)
 			continue;
@@ -70,13 +73,15 @@ bool update_center(CenterMat &center, Eigen::VectorXi &group, Eigen::MatrixXf &c
 		if (dg < dc)
 			delta_g(g) = dc;
 	}
+	std::cerr << "finished update_center" << std::endl;
 	return changed;
 }
 
 bool yinyang_update_cluster(const DataMat &data, ClusterVec &cluster, CenterMat &center, Eigen::VectorXi &group, std::vector<std::set<int>> &centers_in_group, Eigen::MatrixXf &lbg, Eigen::VectorXf &ub, Eigen::VectorXf &delta_c, Eigen::VectorXf &delta_g, Eigen::MatrixXf &center_sum, Eigen::VectorXi &center_count) {
+	std::cerr << "start yinyang_update_cluster" << std::endl;
 	bool changed = false;
 	int N = data.cols();
-	int G = group.rows();
+	int G = lbg.rows();
 	for (int n = 0; n < N; ++n) {
 		ub(n) += delta_c(cluster(n));
 		Eigen::VectorXf old_lbg(lbg.col(n));
@@ -123,6 +128,7 @@ bool yinyang_update_cluster(const DataMat &data, ClusterVec &cluster, CenterMat 
 			}
 		}
 	}
+	std::cerr << "finished yinyang_update_cluster" << std::endl;
 	return changed;
 }
 
@@ -141,8 +147,8 @@ int yinyang(const DataMat &data, ClusterVec &cluster, CenterMat &center, int G, 
 	Eigen::VectorXi center_count(K);	// how many points in a cluster
 
 	yinyang_first_iteration(data, cluster, center, G, precision, group, lbg, ub, center_sum, center_count);
-	std::cerr << "after first iteration " << std::endl;
-	std::cerr << cluster;
+	//std::cerr << cluster;
+	std::cerr << "max iteration " << max_iteration << std::endl;
 	double ll = compute_loss(data, cluster, center), nl;
 	for (int it = 1; it < max_iteration; ++it) {
 		bool changed = false;
