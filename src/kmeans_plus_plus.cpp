@@ -3,6 +3,7 @@
 #include <boost/random.hpp>
 #include <Eigen/Dense>
 #include <iostream>
+#include <cmath>
 
 int choose_center(Eigen::VectorXd &min_dist, Eigen::VectorXi &chosen) {
 	double sum = min_dist.sum();
@@ -25,6 +26,8 @@ int choose_center(Eigen::VectorXd &min_dist, Eigen::VectorXi &chosen) {
 int kmeans_plus_plus_initialize(const DataMat &data, CenterMat &center) {
 	int N = data.cols();
 	int K = center.cols();
+	std::cerr << "Number of data points in kmeans++ " << N << std::endl;
+	std::cerr << "Number of groups in kmeans++ " << K << std::endl;
 	boost::random::mt19937 gen{static_cast<std::uint32_t>(std::time(0))};
 	boost::random::uniform_int_distribution<> dist(0, N - 1);
 	Eigen::VectorXi chosen(N);
@@ -40,7 +43,16 @@ int kmeans_plus_plus_initialize(const DataMat &data, CenterMat &center) {
 		chosen(n) = 1;
 		center.col(i) = data.col(n);
 
-		min_dist.array().min((data.colwise() - center.col(i)).colwise().squaredNorm().transpose().cast<double>().array());
+		//min_dist.array().min((data.colwise() - center.col(i)).colwise().squaredNorm().transpose().cast<double>().array());
+		for (int n = 0; n < N; ++n) {
+			double nv = (data.col(n) - center.col(i)).squaredNorm();
+			if (nv < min_dist(n))
+				min_dist(n) = nv;
+		}
+		if (std::abs(min_dist(n)) > 1e-5) {
+			std::cerr << "error in min_dist" << std::endl;
+			return -1;
+		}
 	}
 
 	return 0;

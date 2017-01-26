@@ -33,8 +33,6 @@ int main(int argc, const char* argv[]) {
 	} else
 		generate_random_initial_cluster(conf, data, center);
 
-	//generate_libsvm_data_file("test", conf, data, label);
-	
 	if (conf->yinyang) {
 		yinyang(data, cluster, center, conf->group_number, conf->norm_precision, conf->max_interation, conf->until_converge);
 	} else {
