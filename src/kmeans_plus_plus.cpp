@@ -36,7 +36,9 @@ int kmeans_plus_plus_initialize(const DataMat &data, CenterMat &center) {
 	center.col(0) = data.col(n);
 	Eigen::VectorXd min_dist(N);
 	min_dist = (data.colwise() - center.col(0)).colwise().squaredNorm().cast<double>();
+	std::cerr << "KMneas++ step 0" << std::endl;
 	for (int i = 1; i < K; ++i) {
+		std::cerr << "KMneas++ step " << i << std::endl;
 		n = choose_center(min_dist, chosen);
 		if (-1 == n)
 			return -1;
