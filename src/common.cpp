@@ -1,18 +1,18 @@
 #include "common.hpp"
 
 #include <string>
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
-#include <boost/random.hpp>
 #include <ctime>
 #include <cstdint>
-#include <iostream>
 #include <memory>
 #include <cstdio>
 #include <fstream>
+#include <iostream>
 #include <iomanip>
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/vector_sparse.hpp>
+#include <boost/program_options.hpp>
+#include <boost/program_options/parsers.hpp>
+#include <boost/random.hpp>
 
 std::ostream& operator<<(std::ostream& os, const KMeans_config& kc) {
 	os << "data file name: " << kc.data_file_name << std::endl;
@@ -26,7 +26,7 @@ std::ostream& operator<<(std::ostream& os, const KMeans_config& kc) {
 	}
 	os << "maximum iteration number: " << kc.max_interation << std::endl;
 	os << "output file name: " << kc.output_file_name << std::endl;
-	os << "precision for bvyyKMeansNorm: " << kc.bvyyKMeansNorm_precision << std::endl;
+	os << "precision for bvyyKMeansNorm: " << kc.norm_precision<< std::endl;
 	if (kc.until_converge)
 		os << "maximum iteration step unlimitted" << std::endl;
 	else
@@ -51,7 +51,7 @@ PConf KMeans_parse_arg(int argc, const char *argv[]) {
 		("cluster_number,k", po::value<int>(&conf->cluster_number), "number of clusters")
 		("max_iteration,i", po::value<int>(&conf->max_interation)->default_value(-1), "maximum number of iteration")
 		("group_number,g", po::value<int>(&conf->group_number), "number of center groups in yinyangkmeans, defaults to k / 10")
-		("bvyyKMeansNorm_precision,p", po::value<float>(&conf->bvyyKMeansNorm_precision)->default_value(1e-4), "precision of the bvyyKMeansNorm of the change of centers for judging convergenve")
+		("bvyyKMeansNorm_precision,p", po::value<float>(&conf->norm_precision)->default_value(1e-4), "precision of the bvyyKMeansNorm of the change of centers for judging convergenve")
 		("debug", "switch on this option to compare yinyang kmeans with lloyd kmeans")
 		("yinyang,y", "yinyang kmeans")
 		("kpp", "switch on kmeans++ initialization")

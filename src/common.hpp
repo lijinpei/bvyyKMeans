@@ -4,8 +4,20 @@
 #include <string>
 #include <memory>
 #include <vector>
+
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+
+#include <ctime>
+#include <cstdint>
+#include <cstdio>
+
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/vector_sparse.hpp>
+#include <boost/program_options.hpp>
+#include <boost/program_options/parsers.hpp>
+#include <boost/random.hpp>
 
 struct KMeans_config {
 	std::string data_file_name;
@@ -48,23 +60,48 @@ std::ostream& operator<<(std::ostream& os, const KMeans_config& kc);
 PConf KMeans_parse_arg(int argc, const char *argv[]);
 
 template <class T>
-double bvyyKMeansNorm(const T &v) {
-		double n = 0;
-		for (auto a: v)
-			n += a * a;
-		return std::sqrt(n);
+inline double bvyyKMeansNorm(const T &v) {
+/*
+	double n = 0;
+	for (auto a: v)
+		n += a * a;
+	return std::sqrt(n);
+*/
+	return boost::numeric::ublas::norm_2(v);
 }
 
 template <class T>
-double bvyyKMeansDistance(const T&v1, const T&v2) {
+inline double bvyyKMeansSquaredNorm(const T &v) {
+/*
+	double n = 0;
+	for (auto a: v)
+		n += a * a;
+	return std::sqrt(n);
+*/
+	double tmp_v = boost::numeric::ublas::norm_2(v);
+	return tmp_v * tmp_v;
+}
+
+template <class T>
+inline double bvyyKMeansDistance(const T&v1, const T&v2) {
 	return bvyyKMeansNorm(v1 - v2);
 }
 
 template <class T>
-int KMeans_get_data(PConf conf, DataMat<T> &data, LabelVec &label);
+inline double bvyyKMeansSquaredDistance(const T&v1, const T&v2) {
+	return bvyyKMeansSquaredNorm(v1 - v2);
+}
+
+template <class T, class V = float>
+inline void bvyyKMeansInsert(T& vec, int d, V val) {
+	vec(d) = val;
+}
+
+template <class T>
+int KMeans_get_data(PConf conf, DataMat<T> &data, LabelVec &label) {
 	FILE* f = fopen(conf->data_file_name.c_str(), "r");
-	int& N = conf->data_number;
-	int& D = conf->data_dimension;
+	const int& N = conf->data_number;
+	const int& D = conf->data_dimension;
 	bool err = false;
 	for (int n = 0; n < N; ++n) {
 		if (1 != fscanf(f, "%f%*[ ]", &label[n])) {
@@ -80,7 +117,7 @@ int KMeans_get_data(PConf conf, DataMat<T> &data, LabelVec &label);
 				err = true;
 				break;
 			}
-			insert(data[n], i - 1 , v);
+			bvyyKMeansInsert(data[n], i - 1 , v);
 		}
 	}
 	fclose(f);
@@ -92,15 +129,15 @@ int KMeans_get_data(PConf conf, DataMat<T> &data, LabelVec &label);
 }
 
 template <class T>
-int generate_libsvm_data_file(std::string file_name, PConf conf, DataMat<T> &data, LabelVec &label);
-	std::ofstream fout(file_name);
+int generate_libsvm_data_file(std::string file_name, PConf conf, DataMat<T> &data, LabelVec &label) {
+	std::ofstream fout(file_name.c_str());
 	fout << std::fixed << std::setprecision(6);
-	int &N = conf->data_number;
-	int &K = conf->data_dimension;
+	const int &N = conf->data_number;
+	const int &D = conf->data_dimension;
 	for (int n = 0; n < N; ++n) {
 		fout << int(label[n]) << ' ';
-		for (int k = 0; k < K; ++k)
-			fout << k+1 << ":" << data[n][k] << ' ';
+		for (int d = 0; d < D; ++d)
+			fout << d+1 << ":" << data[n][d] << ' ';
 		fout << '\n';
 	}
 	fout.close();
@@ -118,7 +155,7 @@ int generate_random_initial_cluster(PConf conf, DataMat<T> &data, CenterMat<T> &
 		while (true) {
 			n = dist(gen);
 			if (!chosen[n]) {
-				chosen(n) = 1;
+				chosen[n] = 1;
 				break;
 			}
 		}
@@ -130,10 +167,10 @@ int generate_random_initial_cluster(PConf conf, DataMat<T> &data, CenterMat<T> &
 int output_cluster(PConf conf, ClusterVec &cluster);
 
 template <class T>
-double compute_loss(const DataMat<T> &data, const ClusterVec &cluster, const CenterMat<T> &center);
+double compute_loss(const DataMat<T> &data, const ClusterVec &cluster, const CenterMat<T> &center) {
 	//std::cerr << "start compute loss" << std::endl;
 	double l = 0;
-	int N = data.size()
+	const int N = data.size();
 	for (int n = 0; n < N; ++n) {
 		/*
 		std::cerr << "n " << n << std::endl;
@@ -147,14 +184,16 @@ double compute_loss(const DataMat<T> &data, const ClusterVec &cluster, const Cen
 }
 
 template <class T>
-int KMeans_export_seed(std::string &file_name, CenterMat<T> &center, int K, int D) {
+int KMeans_export_seed(std::string &file_name, CenterMat<T> &center, const int K, const int D) {
 	std::ofstream fout(file_name.c_str(), std::ios::out|std::ios::binary);
 	// warning: don't do this across machines
-	fout.write((char*)&K, sizeof(int));
-	fout.write((char*)&D, sizeof(int));
+	fout.write(reinterpret_cast<const char*>(&K), sizeof(int));
+	fout.write(reinterpret_cast<const char*>(&D), sizeof(int));
 	for (int k = 0; k < K; ++k)
-		for (int d = 0; d < D; ++d)
-			fout.write((char*)center[k][d], sizeof(double));
+		for (int d = 0; d < D; ++d) {
+			auto tmp = center[k][d];
+			fout.write(reinterpret_cast<const char*>(&tmp), sizeof(double));
+		}
 	fout.close();
 
 	return 0;
@@ -164,15 +203,15 @@ template <class T>
 int KMeans_load_seed(std::string &file_name, int &K, int &D, CenterMat<T> &center) {
 	std::ifstream fin(file_name.c_str(), std::ios::in|std::ios::binary);
 	// warning: don't do this across machines
-	fin.read((char*)&K, sizeof(int));
-	fin.read((char*)&D, sizeof(int));
+	fin.read(reinterpret_cast<char*>(&K), sizeof(int));
+	fin.read(reinterpret_cast<char*>(&D), sizeof(int));
 	std::cerr << "K: " << K << "D: " << D << std::endl;
 	center.resize(K);
 	for (int k = 0; k < K; ++k)
 		for (int d = 0; d < D; ++d) {
 			double v;
-			fin.read((char*)&v, sizeof(double));
-			insert(center[k], d, v);
+			fin.read(reinterpret_cast<char*>(&v), sizeof(double));
+			bvyyKMeansInsert(center[k], d, v);
 		}
 	fin.close();
 

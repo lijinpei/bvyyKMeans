@@ -41,13 +41,13 @@ int run_main(PConf conf) {
 	} else
 		generate_random_initial_cluster(conf, data, center);
 	if (conf->output_seed)
-		KMeans_export_seed(conf->output_seed_file_name, center);
+		KMeans_export_seed(conf->output_seed_file_name, center, K, D);
 
 	if (conf->yinyang) {
 		int G = conf->group_number;
 		yinyang(data, cluster, center, D, G, conf->norm_precision, conf->max_interation, conf->until_converge, conf->debug);
 	} else {
-		lloyd(data, cluster, center, conf->norm_precision, conf->max_interation, conf->until_converge); 
+		lloyd(data, cluster, center, conf->norm_precision, D, conf->max_interation, conf->until_converge); 
 	}
 	output_cluster(conf, cluster);
 
