@@ -23,7 +23,7 @@ bool lloyd_update_center(const DataMat<T> &data, const ClusterVec &cluster, Cent
 			continue;
 		} else {
 			T tmp_vec = workspace1[k] / workspace2[k];
-			if (distance(tmp_vec, center[k]) > precision)
+			if (bvyyKMeansDistance(tmp_vec, center[k]) > precision)
 				changed = true;
 			center[k] = temp_vec;
 		}

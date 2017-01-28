@@ -31,7 +31,7 @@ int yinyang_first_iteration(const DataMat<T> &data, ClusterVec &cluster, CenterM
 	std::vector<std::vector<double>> d(K, std::vector<double>(N));
 	for (int n = 0; n < N; ++n)
 		for (int k = 0; k < K; ++k)
-			d[k][n] = norm(center[k], data[n]);
+			d[k][n] = bvyyKMeansNorm(center[k], data[n]);
 	/* initialize ub, lbg */
 	for (int n = 0; n < N; ++n) {
 		//std::cerr << "d.col(n) " << d.col(n) << std::endl;
@@ -77,7 +77,7 @@ bool update_center(CenterMat<T> &center, ClusterVec &group, CenterMat<T> &center
 			continue;
 		tmp_center = center[k];
 		center[k] = center_sum[k] / cc;
-		float dc = norm(center[k], tmp_center);
+		float dc = bvyyKMeansNorm(center[k], tmp_center);
 		if (dc > precision)
 			changed = true;
 		delta_c[k] = dc;
@@ -117,7 +117,7 @@ bool yinyang_update_cluster(const DataMat<T> &data, ClusterVec &cluster, CenterM
 		}
 		if (min_lbg < 0 || min_lbg > ub[n])
 			continue;
-		ub[n] = norm(data[n] - center[cluster[n]]);
+		ub[n] = bvyyKMeansNorm(data[n] - center[cluster[n]]);
 		if (min_lbg > ub[n])
 			continue;
 		//std::cerr << "pass global filtering ";
@@ -140,7 +140,7 @@ bool yinyang_update_cluster(const DataMat<T> &data, ClusterVec &cluster, CenterM
 				if (old_lbg[g] - delta_c[c] > ub[n])
 					continue;
 				*/
-				float tmp_d = norm(data[n] - center[c]);
+				float tmp_d = bvyyKMeansNorm(data[n] - center[c]);
 				if (tmp_d < ub[n]) {
 					//std::cerr << "pass local filtering ";
 					changed = true;

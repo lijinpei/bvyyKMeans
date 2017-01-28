@@ -21,7 +21,7 @@ struct KMeans_config {
 
 	int max_interation;
 	bool until_converge;
-	float norm_precision;
+	float bvyyKMeansNorm_precision;
 
 	bool kmeans_plus_plus_initialization;
 	bool yinyang;
@@ -41,6 +41,19 @@ using PConf = std::shared_ptr<KMeans_config>;
 
 std::ostream& operator<<(std::ostream& os, const KMeans_config& kc);
 PConf KMeans_parse_arg(int argc, const char *argv[]);
+
+template <class T>
+double bvyyKMeansNorm(const T &v) {
+		double n = 0;
+		for (auto a: v)
+			n += a * a;
+		return std::sqrt(n);
+}
+
+template <class T>
+double bvyyKMeansDistance(const T&v1, const T&v2) {
+	return bvyyKMeansNorm(v1 - v2);
+}
 
 template <class T>
 int KMeans_get_data(PConf conf, DataMat<T> &data, LabelVec &label);
@@ -122,7 +135,7 @@ double compute_loss(const DataMat<T> &data, const ClusterVec &cluster, const Cen
 		std::cerr << "cluster " << std::endl << cluster << std::endl;
 		std::cerr << "cluster(n) " << cluster(n) << std::endl;
 		*/
-		l += distance(data[n], center[cluster[n]]);
+		l += bvyyKMeansDistance(data[n], center[cluster[n]]);
 	}
 	//std::cerr << "finished compute loss" << std::endl;
 	return l;

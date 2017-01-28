@@ -57,10 +57,7 @@ flags = [
 '-x',
 'c++',
 '-I',
-'/home/lijinpei/Development/Eigen',
-'-I',
 '.',
-' common.cpp '
 ]
 
 

@@ -14,20 +14,6 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/vector_sparse.hpp>
 
-template <class T>
-double norm(const T &v) {
-		double n = 0;
-		for (auto a: v)
-			n += a * a;
-		return std::sqrt(n);
-}
-
-template <class T>
-double distance(const T&v1, const T&v2) {
-	return norm(v1 - v2);
-}
-
-
 std::ostream& operator<<(std::ostream& os, const KMeans_config& kc) {
 	os << "data file name: " << kc.data_file_name << std::endl;
 	os << "data number: " << kc.data_number << std::endl;
@@ -40,7 +26,7 @@ std::ostream& operator<<(std::ostream& os, const KMeans_config& kc) {
 	}
 	os << "maximum iteration number: " << kc.max_interation << std::endl;
 	os << "output file name: " << kc.output_file_name << std::endl;
-	os << "precision for norm: " << kc.norm_precision << std::endl;
+	os << "precision for bvyyKMeansNorm: " << kc.bvyyKMeansNorm_precision << std::endl;
 	if (kc.until_converge)
 		os << "maximum iteration step unlimitted" << std::endl;
 	else
@@ -65,7 +51,7 @@ PConf KMeans_parse_arg(int argc, const char *argv[]) {
 		("cluster_number,k", po::value<int>(&conf->cluster_number), "number of clusters")
 		("max_iteration,i", po::value<int>(&conf->max_interation)->default_value(-1), "maximum number of iteration")
 		("group_number,g", po::value<int>(&conf->group_number), "number of center groups in yinyangkmeans, defaults to k / 10")
-		("norm_precision,p", po::value<float>(&conf->norm_precision)->default_value(1e-4), "precision of the norm of the change of centers for judging convergenve")
+		("bvyyKMeansNorm_precision,p", po::value<float>(&conf->bvyyKMeansNorm_precision)->default_value(1e-4), "precision of the bvyyKMeansNorm of the change of centers for judging convergenve")
 		("debug", "switch on this option to compare yinyang kmeans with lloyd kmeans")
 		("yinyang,y", "yinyang kmeans")
 		("kpp", "switch on kmeans++ initialization")
