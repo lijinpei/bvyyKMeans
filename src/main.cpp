@@ -3,19 +3,19 @@
 #include "yinyang.hpp"
 #include "kmeans_plus_plus.hpp"
 #include <iostream>
+#include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/vector_sparse.hpp>
+#include <boost/numeric/ublas/io.hpp>
 
-
-int main(int argc, const char* argv[]) {
-	std::shared_ptr<KMeans_config> conf = KMeans_parse_arg(argc, argv);
-	if (!conf)
-		return 0;
+template <class T>
+int run_main(PConf conf) {
 	int N = conf->data_number;
 	int K = conf->cluster_number;
 	int D = conf->data_dimension;
-	DataMat data(D, N);
+	DataMat<T> data(N, T(D));
 	LabelVec label(N);
 	ClusterVec cluster(N);
-	CenterMat center(D, K);
+	CenterMat<T> center(K, T(D));
 	if (KMeans_get_data(conf, data, label)) {
 		std::cerr << "error when get data" << std::endl;
 		return 1;
@@ -44,12 +44,23 @@ int main(int argc, const char* argv[]) {
 		KMeans_export_seed(conf->output_seed_file_name, center);
 
 	if (conf->yinyang) {
-		yinyang(data, cluster, center, conf->group_number, conf->norm_precision, conf->max_interation, conf->until_converge, conf->debug);
+		int G = conf->group_number;
+		yinyang(data, cluster, center, D, G, conf->norm_precision, conf->max_interation, conf->until_converge, conf->debug);
 	} else {
 		lloyd(data, cluster, center, conf->norm_precision, conf->max_interation, conf->until_converge); 
 	}
 	output_cluster(conf, cluster);
 
 	return 0;
+}
+
+int main(int argc, const char* argv[]) {
+	std::shared_ptr<KMeans_config> conf = KMeans_parse_arg(argc, argv);
+	if (!conf)
+		return 0;
+	if (conf->sparse) 
+		return run_main<boost::numeric::ublas::compressed_vector<float>>(conf);
+	else
+		return run_main<boost::numeric::ublas::vector<float>>(conf);
 }
 

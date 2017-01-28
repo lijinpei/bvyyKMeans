@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <Eigen/Dense>
+#include <vector>
 
 struct KMeans_config {
 	std::string data_file_name;
@@ -27,6 +28,7 @@ struct KMeans_config {
 	int group_number;
 
 	bool debug;
+	bool sparse;
 };
 
 template <class T>
@@ -108,6 +110,7 @@ int generate_random_initial_cluster(PConf conf, DataMat<T> &data, CenterMat<T> &
 }
 
 int output_cluster(PConf conf, ClusterVec &cluster);
+
 template <class T>
 double compute_loss(const DataMat<T> &data, const ClusterVec &cluster, const CenterMat<T> &center);
 	//std::cerr << "start compute loss" << std::endl;
@@ -157,5 +160,6 @@ int KMeans_load_seed(std::string &file_name, int &K, int &D, CenterMat<T> &cente
 
 	return 0;
 }
+
 
 #endif

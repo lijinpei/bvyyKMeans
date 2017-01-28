@@ -52,7 +52,8 @@ PConf KMeans_parse_arg(int argc, const char *argv[]) {
 		("norm_precision,p", po::value<float>(&conf->norm_precision)->default_value(1e-4), "precision of the norm of the change of centers for judging convergenve")
 		("debug", "switch on this option to compare yinyang kmeans with lloyd kmeans")
 		("yinyang,y", "yinyang kmeans")
-		("kpp", "switch on kmeans++ initialization");
+		("kpp", "switch on kmeans++ initialization")
+		("sparse", "run on sparse dataset");
 	po::variables_map vm;
 	po::store(po::parse_command_line(argc, argv, desc), vm);
 	po::notify(vm);
@@ -65,6 +66,7 @@ PConf KMeans_parse_arg(int argc, const char *argv[]) {
 	conf->input_seed = vm.count("input_seed_file_name");
 	conf->output_seed = vm.count("output_seed_file_name");
 	conf->debug = vm.count("debug");
+	conf->sparse = vm.count("sparse");
 	if (-1 == conf->max_interation) {
 		conf->max_interation = 2;
 		conf->until_converge = true;
@@ -85,4 +87,3 @@ int output_cluster(std::shared_ptr<KMeans_config>conf, ClusterVec &cluster) {
 
 	return 0;
 }
-
