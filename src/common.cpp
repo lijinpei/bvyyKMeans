@@ -11,6 +11,22 @@
 #include <cstdio>
 #include <fstream>
 #include <iomanip>
+#include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/vector_sparse.hpp>
+
+template <class T>
+double norm(const T &v) {
+		double n = 0;
+		for (auto a: v)
+			n += a * a;
+		return std::sqrt(n);
+}
+
+template <class T>
+double distance(const T&v1, const T&v2) {
+	return norm(v1 - v2);
+}
+
 
 std::ostream& operator<<(std::ostream& os, const KMeans_config& kc) {
 	os << "data file name: " << kc.data_file_name << std::endl;
@@ -87,3 +103,4 @@ int output_cluster(std::shared_ptr<KMeans_config>conf, ClusterVec &cluster) {
 
 	return 0;
 }
+
