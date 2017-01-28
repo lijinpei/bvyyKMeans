@@ -45,9 +45,9 @@ int run_main(PConf conf) {
 
 	if (conf->yinyang) {
 		int G = conf->group_number;
-		yinyang(data, cluster, center, D, G, conf->bvyyKMeansNorm_precision, conf->max_interation, conf->until_converge, conf->debug);
+		yinyang(data, cluster, center, D, G, conf->norm_precision, conf->max_interation, conf->until_converge, conf->debug);
 	} else {
-		lloyd(data, cluster, center, conf->bvyyKMeansNorm_precision, conf->max_interation, conf->until_converge); 
+		lloyd(data, cluster, center, conf->norm_precision, conf->max_interation, conf->until_converge); 
 	}
 	output_cluster(conf, cluster);
 
@@ -59,8 +59,8 @@ int main(int argc, const char* argv[]) {
 	if (!conf)
 		return 0;
 	if (conf->sparse) 
-		return run_main<boost::numeric::ublas::compressed_vector<float>>(conf);
+		return run_main<SparseVec<float>>(conf);
 	else
-		return run_main<boost::numeric::ublas::vector<float>>(conf);
+		return run_main<DenseVec<float>>(conf);
 }
 

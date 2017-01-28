@@ -3,8 +3,9 @@
 
 #include <string>
 #include <memory>
-#include <Eigen/Dense>
 #include <vector>
+#include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/vector_sparse.hpp>
 
 struct KMeans_config {
 	std::string data_file_name;
@@ -21,7 +22,7 @@ struct KMeans_config {
 
 	int max_interation;
 	bool until_converge;
-	float bvyyKMeansNorm_precision;
+	float norm_precision;
 
 	bool kmeans_plus_plus_initialization;
 	bool yinyang;
@@ -38,6 +39,10 @@ template <class T>
 using CenterMat = std::vector<T>;
 using ClusterVec = std::vector<int>;
 using PConf = std::shared_ptr<KMeans_config>;
+template <class T>
+using SparseVec = boost::numeric::ublas::compressed_vector<T>;
+template <class T>
+using DenseVec = boost::numeric::ublas::vector<T>;
 
 std::ostream& operator<<(std::ostream& os, const KMeans_config& kc);
 PConf KMeans_parse_arg(int argc, const char *argv[]);
