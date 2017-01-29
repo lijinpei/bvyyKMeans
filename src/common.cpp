@@ -197,8 +197,10 @@ int KMeans_export_seed(std::string &file_name, CenterMat &center) {
 	fout.write((char*)&K, sizeof(int));
 	fout.write((char*)&D, sizeof(int));
 	for (int k = 0; k < K; ++k)
-		for (int d = 0; d < D; ++d)
-			fout.write((char*)&center(d, k), sizeof(double));
+		for (int d = 0; d < D; ++d) {
+			double tmp_v = center(d, k);
+			fout.write((char*)&tmp_v, sizeof(double));
+		}
 	fout.close();
 
 	return 0;
@@ -209,12 +211,13 @@ int KMeans_load_seed(std::string &file_name, int &K, int &D, CenterMat &center) 
 	// warning: don't do this across machines
 	fin.read((char*)&K, sizeof(int));
 	fin.read((char*)&D, sizeof(int));
-	std::cerr << "K: " << K << "D: " << D << std::endl;
+	std::cerr << "K: " << K << " D: " << D << std::endl;
 	center.resize(D, K);
 	for (int k = 0; k < K; ++k) {
 		for (int d = 0; d < D; ++d) {
-			fin.read((char*)&center(d, k), sizeof(double));
-			std::cerr << center(d, k) << ' ';
+			double tmp_v;
+			fin.read((char*)&tmp_v, sizeof(double));
+			center(d, k) = tmp_v;
 		}
 		std::cerr << std::endl;
 	}
