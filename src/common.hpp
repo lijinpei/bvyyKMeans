@@ -39,6 +39,7 @@ struct KMeans_config {
 	bool kmeans_plus_plus_initialization;
 	bool yinyang;
 	int group_number;
+	int block_size;
 
 	bool debug;
 	bool sparse;
@@ -95,6 +96,11 @@ inline double bvyyKMeansSquaredDistance(const T&v1, const T&v2) {
 template <class T, class V = float>
 inline void bvyyKMeansInsert(T& vec, int d, V val) {
 	vec(d) = val;
+}
+
+template <class T>
+inline double bvyyKMeansInnerProduct(const T&v1, const T&v2) {
+	return boost::numeric::ublas::inner_prod(v1, v2);
 }
 
 template <class T>

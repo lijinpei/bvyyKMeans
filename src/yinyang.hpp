@@ -64,8 +64,8 @@ int yinyang_first_iteration(const DataMat<T> &data, ClusterVec &cluster, CenterM
 	return 0;
 }
 
-template <class T>
-bool update_center(CenterMat<T> &center, ClusterVec &group, CenterMat<T> &center_sum, ClusterVec &center_count, std::vector<float> &delta_c, std::vector<float> &delta_g, double precision) {
+template <class T, bool blocked>
+bool update_center(CenterMat<T> &center, ClusterVec &group, CenterMat<T> &center_sum, ClusterVec &center_count, std::vector<float> &delta_c, std::vector<float> &delta_g, double precision, std::vector<double> &norm_center, std::vector<T> &block_center, const int B, const int D) {
 	//std::cerr << "start update_center" << std::endl;
 	bool changed = false;
 	T tmp_center;
@@ -80,8 +80,13 @@ bool update_center(CenterMat<T> &center, ClusterVec &group, CenterMat<T> &center
 		tmp_center = center[k];
 		center[k] = center_sum[k] / cc;
 		float dc = bvyyKMeansDistance(center[k], tmp_center);
-		if (dc > precision)
+		if (dc > precision) {
 			changed = true;
+			if (blocked) {
+				norm_center[k] = bvyyKMeansNorm(center[k]);
+				generate_block_vector(block_center[k], center[k], B, D);
+			}
+		}
 		delta_c[k] = dc;
 		int g = group[k];
 		float dg = delta_g[g];
@@ -92,7 +97,7 @@ bool update_center(CenterMat<T> &center, ClusterVec &group, CenterMat<T> &center
 	return changed;
 }
 
-template <class T>
+template <class T, bool blocked>
 bool yinyang_update_cluster(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, ClusterVec &group, std::vector<std::set<int>> &centers_in_group, std::vector<std::vector<float>> &lbg, std::vector<float> &ub, std::vector<float> &delta_c, std::vector<float> &delta_g, CenterMat<T> &center_sum, std::vector<int> &center_count, std::vector<int> &count) {
 	//std::cerr << "start yinyang_update_cluster" << std::endl;
 	bool changed = false;
@@ -139,10 +144,14 @@ bool yinyang_update_cluster(const DataMat<T> &data, ClusterVec &cluster, CenterM
 		//std::cerr << "test2" << std::endl;
 				if (lbg[n][g] >= 0 && old_lbg[g] - delta_c[c] >= lbg[n][g])
 					continue;
-				/*
-				if (old_lbg[g] - delta_c[c] > ub[n])
-					continue;
-				*/
+				if (blocked) {
+					double tmp_b = bvyyKmeansLBB(n, norm_data, block_data, g, norm_center, block_center);
+					if (tmp_b >= ub[n]) {
+						if (lbg[n][g] < 0 || tmp_b < lbg[n][g])
+							lbg[n][g] = tmp_b;
+						continue;
+					}
+				}
 				float tmp_d = bvyyKMeansDistance(data[n], center[c]);
 				++count[n];
 				if (tmp_d < ub[n]) {
@@ -190,8 +199,8 @@ int cmp_cluster(ClusterVec &cluster, ClusterVec &cluster1) {
 	return 0;
 }
 
-template <class T>
-int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, int D, int G, double precision, int max_iteration, bool until_converge, bool debug) {
+template <class T, bool blocked>
+int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, const int D, const int G, const int B, double precision, int max_iteration, bool until_converge, bool debug, const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> &norm_center, std::vector<T> &block_center) {
 	int N = data.size();
 	int K = center.size();
 
@@ -214,14 +223,14 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, i
 		workspace1 = CenterMat<T>(N, T(D));
 		workspace2.resize(K);
 	}
-	yinyang_first_iteration(data, cluster, center, G, precision, group, lbg, ub, center_sum, center_count, centers_in_group, D);
+	yinyang_first_iteration<T, blocked>(data, cluster, center, G, precision, group, lbg, ub, center_sum, center_count, centers_in_group, D, norm_data, block_data, norm_center, block_center);
 	//std::cerr << cluster;
 	//std::cerr << "max iteration " << max_iteration << std::endl;
 	double ll = compute_loss(data, cluster, center), nl;
 	std::vector<int> count(N);
 	for (int it = 1; it < max_iteration; ++it) {
 		bool changed1, changed2;
-		changed1 = update_center(center, group, center_sum, center_count, delta_c, delta_g, precision);
+		changed1 = update_center<T, blocked>(center, group, center_sum, center_count, delta_c, delta_g, precision, norm_center, block_center, B, D);
 		//std::cerr << "center changed " << changed1 << std::endl;
 		nl = compute_loss(data, cluster, center);
 		if (nl - ll > 1) {
@@ -229,12 +238,12 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, i
 		}
 		ll = nl;
 		if (debug) {
-			lloyd_update_center(data, cluster, center1, precision, workspace1, workspace2);
+			lloyd_update_center<T, blocked>(data, cluster, center1, precision, workspace1, workspace2, norm_center, block_center, B, D);
 			if (cmp_center(center, center1, D, precision)) {
 				std::cerr << "different center in step " << it << std::endl;
 			}
 		}
-		changed2 = yinyang_update_cluster(data, cluster, center, group, centers_in_group, lbg, ub, delta_c, delta_g, center_sum, center_count, count);
+		changed2 = yinyang_update_cluster<T, blocked>(data, cluster, center, group, centers_in_group, lbg, ub, delta_c, delta_g, center_sum, center_count, count, norm_data, block_data, norm_center, block_center);
 		//std::cerr << "cluster changed " << changed2 << std::endl;
 		nl = compute_loss(data, cluster, center);
 		if (nl - ll > 1) {
@@ -242,7 +251,7 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, i
 		}
 		ll = nl;
 		if (debug) {
-			lloyd_update_cluster(data, cluster1, center);
+			lloyd_update_cluster<T, blocked>(data, cluster1, center, norm_data, block_data, norm_center, block_center);
 			if (cmp_cluster(cluster, cluster1)) {
 				std::cerr << "different cluster in step " << it << std::endl;
 			}

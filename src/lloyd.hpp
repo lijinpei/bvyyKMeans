@@ -66,6 +66,7 @@ bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const Cen
 	//std::cerr << "finished lloyd update cluster" << std::endl;
 	return changed;
 }
+
 template <class T>
 int lloyd(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, double precision, int D, int max_interation, bool until_converge) {
 	std::cerr << "start lloyd iteration" << std::endl;

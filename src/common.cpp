@@ -52,6 +52,7 @@ PConf KMeans_parse_arg(int argc, const char *argv[]) {
 		("max_iteration,i", po::value<int>(&conf->max_interation)->default_value(-1), "maximum number of iteration")
 		("group_number,g", po::value<int>(&conf->group_number), "number of center groups in yinyangkmeans, defaults to k / 10")
 		("bvyyKMeansNorm_precision,p", po::value<float>(&conf->norm_precision)->default_value(1e-4), "precision of the bvyyKMeansNorm of the change of centers for judging convergenve")
+		("block_size", po::value<int>(&conf->block_size)->default_value(-1), "size of block vector")
 		("debug", "switch on this option to compare yinyang kmeans with lloyd kmeans")
 		("yinyang,y", "yinyang kmeans")
 		("kpp", "switch on kmeans++ initialization")
