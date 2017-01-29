@@ -133,7 +133,7 @@ int KMeans_get_seed(std::shared_ptr<KMeans_config> conf, Eigen::VectorXi &cluste
 */
 int generate_random_initial_cluster(PConf conf, DataMat &data, CenterMat &center) {
 	boost::random::mt19937 gen{static_cast<std::uint32_t>(std::time(0))};
-	boost::random::uniform_int_distribution<> dist{0, conf->cluster_number - 1};
+	boost::random::uniform_int_distribution<> dist{0, conf->data_number - 1};
 	Eigen::VectorXi chosen(conf->data_number);
 	chosen.setZero();
 	for (int i = 0; i < conf->cluster_number; ++i) {
