@@ -191,8 +191,8 @@ int KMeans_export_seed(std::string &file_name, CenterMat<T> &center, const int K
 	fout.write(reinterpret_cast<const char*>(&D), sizeof(int));
 	for (int k = 0; k < K; ++k)
 		for (int d = 0; d < D; ++d) {
-			auto tmp = center[k][d];
-			fout.write(reinterpret_cast<const char*>(&tmp), sizeof(double));
+			double tmp_v = center[k][d];
+			fout.write(reinterpret_cast<const char*>(&tmp_v), sizeof(double));
 		}
 	fout.close();
 
@@ -209,12 +209,9 @@ int KMeans_load_seed(std::string &file_name, int &K, int &D, CenterMat<T> &cente
 	center.resize(K);
 	for (int k = 0; k < K; ++k) {
 		for (int d = 0; d < D; ++d) {
-			double v;
-			fin.read(reinterpret_cast<char*>(&v), sizeof(double));
-			bvyyKMeansInsert(center[k], d, v);
-			if (std::abs(center[k][d] - v) > 1e-5)
-				std::cerr << "error in insertion!!!" << std::endl;
-			std::cerr << v << ' ';
+			double tmp_v;
+			fin.read(reinterpret_cast<char*>(&tmp_v), sizeof(double));
+			bvyyKMeansInsert(center[k], d, tmp_v);
 		}
 		std::cerr << std::endl;
 	}
@@ -224,3 +221,4 @@ int KMeans_load_seed(std::string &file_name, int &K, int &D, CenterMat<T> &cente
 }
 
 #endif
+
