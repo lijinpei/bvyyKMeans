@@ -205,14 +205,17 @@ int KMeans_load_seed(std::string &file_name, int &K, int &D, CenterMat<T> &cente
 	// warning: don't do this across machines
 	fin.read(reinterpret_cast<char*>(&K), sizeof(int));
 	fin.read(reinterpret_cast<char*>(&D), sizeof(int));
-	std::cerr << "K: " << K << "D: " << D << std::endl;
+	std::cerr << "K: " << K << " D: " << D << std::endl;
 	center.resize(K);
-	for (int k = 0; k < K; ++k)
+	for (int k = 0; k < K; ++k) {
 		for (int d = 0; d < D; ++d) {
 			double v;
 			fin.read(reinterpret_cast<char*>(&v), sizeof(double));
 			bvyyKMeansInsert(center[k], d, v);
+			std::cerr << v << ' ';
 		}
+		std::cerr << std::endl;
+	}
 	fin.close();
 
 	return 0;
