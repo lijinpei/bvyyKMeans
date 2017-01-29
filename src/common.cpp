@@ -215,6 +215,7 @@ int KMeans_load_seed(std::string &file_name, int &K, int &D, CenterMat &center) 
 		for (int d = 0; d < D; ++d) {
 			fin.read((char*)&center(d, k), sizeof(double));
 			std::ceerr << center(d, k) << ' ';
+		}
 		std::cerr << std::endl;
 	}
 	fin.close();
