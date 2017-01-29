@@ -21,6 +21,8 @@ int run_main(PConf conf) {
 		return 1;
 	}
 
+	std::cout << conf->input_seed << std::endl;
+	std::cout << conf->kmeans_plus_plus_initialization << std::endl;
 	if (conf->input_seed) {
 		int tmp_K = -1, tmp_D = -1;
 		std::cerr << "start load seed" << std::endl;
