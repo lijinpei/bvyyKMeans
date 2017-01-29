@@ -212,6 +212,8 @@ int KMeans_load_seed(std::string &file_name, int &K, int &D, CenterMat<T> &cente
 			double v;
 			fin.read(reinterpret_cast<char*>(&v), sizeof(double));
 			bvyyKMeansInsert(center[k], d, v);
+			if (std::abs(center[k][d] - v) > 1e-5)
+				std::cerr << "error in insertion!!!" << std::endl;
 			std::cerr << v << ' ';
 		}
 		std::cerr << std::endl;
@@ -220,6 +222,5 @@ int KMeans_load_seed(std::string &file_name, int &K, int &D, CenterMat<T> &cente
 
 	return 0;
 }
-
 
 #endif
