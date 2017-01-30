@@ -21,11 +21,7 @@ void generate_block_vector(T &vec_target, const T&vec_source, const int B, const
 }
 
 template <class T>
-inline double bvyyKMeansLBB(int n, const std::vector<double> &norm_data, const std::vector<T> &block_data, int k, std::vector<double> &norm_center, const std::vector<T> &block_center) {
-	double norm1 = norm_data[n];
-	double norm2 = norm_center[k];
-	const T& bv1 = block_data[n];
-	const T& bv2 = block_center[k];
+inline double bvyyKMeansLBB(double norm1, const T &bv1, double &norm2, const T &bv2) {
 	double tmp = norm1*norm1 + norm2*norm2 - 2 * bvyyKMeansInnerProduct(bv1, bv2);
 	if (tmp <= 0)
 		return 0;
@@ -33,10 +29,8 @@ inline double bvyyKMeansLBB(int n, const std::vector<double> &norm_data, const s
 		return std::sqrt(tmp);
 }
 
-inline double bvyyKMeansLBC(int n, const std::vector<double> &norm_data, int k, const std::vector<double> &norm_center) {
-	double tmp1 = norm_data[n];
-	double tmp2 = norm_center[k];
-	return std::sqrt(tmp1*tmp1+tmp2*tmp2-2*tmp1*tmp2);
+inline double bvyyKMeansLBC(double norm1, double norm2) {
+	return std::sqrt(norm1*norm1+norm2*norm2-2*norm1*norm2);
 }
 
 #endif

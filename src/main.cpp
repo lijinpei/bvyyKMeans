@@ -47,11 +47,34 @@ int run_main(PConf conf) {
 	if (conf->output_seed)
 		KMeans_export_seed(conf->output_seed_file_name, center, K, D);
 
+	const int B = conf->block_size;
+	std::vector<double> norm_data, norm_center;
+	std::vector<T> block_data, block_center;
+	if (B > 0) {
+		norm_data.resize(N);
+		block_data.resize(N);
+		for (int n = 0; n < N; ++n) {
+			norm_data[n] = bvyyKMeansNorm(data[n]);
+			generate_block_vector(block_data[n], data[n], B, D);
+		}
+		norm_center.resize(K);
+		block_center.resize(K);
+		for (int k = 0; k < K; ++k) {
+			norm_center[k] = bvyyKMeansNorm(center[k]);
+			generate_block_vector(block_center[k], center[k], B, D);
+		}
+	}
 	if (conf->yinyang) {
 		int G = conf->group_number;
-		yinyang(data, cluster, center, D, G, conf->norm_precision, conf->max_interation, conf->until_converge, conf->debug);
+		if (B > 0)
+			yinyang<T, true>(data, cluster, center, D, G, B, conf->norm_precision, conf->max_interation, conf->until_converge, conf->debug, norm_data, block_data, norm_center, block_center);
+		else
+			yinyang<T, false>(data, cluster, center, D, G, B, conf->norm_precision, conf->max_interation, conf->until_converge, conf->debug, norm_data, block_data, norm_center, block_center);
 	} else {
-		lloyd(data, cluster, center, conf->norm_precision, D, conf->max_interation, conf->until_converge); 
+		if (B > 0)
+			lloyd<T, true>(data, cluster, center, conf->norm_precision, D, conf->max_interation, conf->until_converge, B, norm_data, block_data, norm_center, block_center);
+		else
+			lloyd<T, false>(data, cluster, center, conf->norm_precision, D, conf->max_interation, conf->until_converge, B, norm_data, block_data, norm_center, block_center);
 	}
 	output_cluster(conf, cluster);
 
