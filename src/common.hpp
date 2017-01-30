@@ -105,6 +105,7 @@ inline double bvyyKMeansInnerProduct(const T&v1, const T&v2) {
 
 template <class T>
 int KMeans_get_data(PConf conf, DataMat<T> &data, LabelVec &label) {
+	std::cerr << "get data" << std::endl;
 	FILE* f = fopen(conf->data_file_name.c_str(), "r");
 	const int& N = conf->data_number;
 	const int& D = conf->data_dimension;
@@ -112,6 +113,7 @@ int KMeans_get_data(PConf conf, DataMat<T> &data, LabelVec &label) {
 	for (int n = 0; n < N; ++n) {
 		if (1 != fscanf(f, "%f%*[ ]", &label[n])) {
 			err = true;
+			std::cerr << n << std::endl;
 			break;
 		}
 		int c;
@@ -121,6 +123,7 @@ int KMeans_get_data(PConf conf, DataMat<T> &data, LabelVec &label) {
 			float v;
 			if (2 != fscanf(f, "%d:%f%*[ ]", &i, &v) || i > D) {
 				err = true;
+				std::cerr << n << std::endl;
 				break;
 			}
 			bvyyKMeansInsert(data[n], i - 1 , v);

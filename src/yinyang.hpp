@@ -32,9 +32,10 @@ int yinyang_first_iteration(const DataMat<T> &data, ClusterVec &cluster, CenterM
 	ClusterVec workspace2(K);
 	std::vector<double> min_dist;
 	std::vector<bool> Y(N), Z(N);
-	lloyd_update_cluster<T, false>(data, cluster, center, norm_data, block_data, norm_center, block_center, Y, Z, min_dist);
+	std::vector<int> dummy_count;
+	lloyd_update_cluster<T, false>(data, cluster, center, norm_data, block_data, norm_center, block_center, Y, Z, min_dist, dummy_count);
 	lloyd_update_center<T, false>(data, cluster, center, precision, workspace1, workspace2, -1 , D, norm_center, block_center, Y, Z, min_dist);
-	lloyd_update_cluster<T, false>(data, cluster, center, norm_data, block_data, norm_center, block_center, Y, Z, min_dist);
+	lloyd_update_cluster<T, false>(data, cluster, center, norm_data, block_data, norm_center, block_center, Y, Z, min_dist, dummy_count);
 	std::cerr << "step 0 loss " << compute_loss(data, cluster, center) << std::endl;
 	std::vector<std::vector<double>> d(N, std::vector<double>(K));
 	for (int n = 0; n < N; ++n)
@@ -240,6 +241,7 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 		workspace1 = CenterMat<T>(N, T(D));
 		workspace2.resize(K);
 	}
+	unsigned long long total_count = N * K;
 	yinyang_first_iteration<T, blocked>(data, cluster, center, G, precision, group, lbg, ub, center_sum, center_count, centers_in_group, D, norm_data, block_data, norm_center, block_center);
 	//std::cerr << cluster;
 	//std::cerr << "max iteration " << max_iteration << std::endl;
@@ -247,7 +249,9 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 	std::vector<int> count(N);
 	std::vector<bool> tmp_Y, tmp_Z;
 	std::vector<double> tmp_min_dist;
-	for (int it = 1; it < max_iteration; ++it) {
+	std::vector<int> dummy_count;
+	int it = 1;
+	for (; it < max_iteration; ++it) {
 		bool changed1, changed2;
 		changed1 = update_center<T, blocked>(center, group, center_sum, center_count, delta_c, delta_g, precision, norm_center, block_center, B, D);
 		//std::cerr << "center changed " << changed1 << std::endl;
@@ -270,7 +274,7 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 		}
 		ll = nl;
 		if (debug) {
-			lloyd_update_cluster<T, false>(data, cluster1, center, norm_data, block_data, norm_center, block_center, tmp_Y, tmp_Z, tmp_min_dist);
+			lloyd_update_cluster<T, false>(data, cluster1, center, norm_data, block_data, norm_center, block_center, tmp_Y, tmp_Z, tmp_min_dist, dummy_count);
 			if (cmp_cluster(cluster, cluster1)) {
 				std::cerr << "different cluster in step " << it << std::endl;
 			}
@@ -285,14 +289,16 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 		if (nl - ll > 1) {
 			std::cerr << "loss increase in step " << it << std::endl;
 		}
-		int total_count = std::accumulate(count.begin(), count.end(), 0);
-		std::cerr << "step " << it << " loss " << nl << " total number of distance count " <<  total_count << " percentage " << static_cast<double>(total_count)/static_cast<double>(N * K) << std::endl;
+		int iteration_count = std::accumulate(count.begin(), count.end(), 0);
+		std::cerr << "step " << it << " loss " << nl << " total number of distance count " <<  iteration_count << " percentage " << static_cast<double>(iteration_count)/static_cast<double>(N * K) << std::endl;
+		total_count += iteration_count;
 		ll = nl;
 		if (until_converge)
 			++max_iteration;
 		std::fill(count.begin(), count.end(), 0);
 	}
 
+	std::cout << "total speed up " << static_cast<double>(N * K * it) / static_cast<double>(total_count) << std::endl;
 	return 0;
 }
 

@@ -58,8 +58,12 @@ bool lloyd_update_center(const DataMat<T> &data, const ClusterVec &cluster, Cent
 template <class T, bool blocked>
 bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const CenterMat<T> &center,
 		const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> &norm_center, std::vector<T> &block_center,
-		const std::vector<bool> &Y, const std::vector<bool> Z, std::vector<double> &min_dist) {
+		const std::vector<bool> &Y, const std::vector<bool> Z, std::vector<double> &min_dist,
+		std::vector<int> &count) {
 	//std::cerr << "start lloyd update cluster" << std::endl;
+	if (blocked) {
+		std::fill(count.begin(), count.end(), 0);
+	}
 	double l1 = compute_loss(data, cluster, center);
 	bool changed = false;
 	int N = data.size();
@@ -78,6 +82,9 @@ bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const Cen
 					continue;
 			}
 			float nv = bvyyKMeansDistance(data[n], center[k]);
+			if (blocked) {
+				++count[n];
+			}
 			if (nv < mv) {
 				mp = k;
 				mv = nv;
@@ -124,26 +131,45 @@ int lloyd(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 		std::fill(Y.begin(), Y.end(), false);
 		std::fill(Z.begin(), Z.end(), false);
 	}
-	lloyd_update_cluster<T, blocked>(data, cluster, center, norm_data, block_data, norm_center, block_center, Y, Z, min_dist);
-	for (int i = 0; i < max_iteration; ++i) {
-		//std::cerr << "start iteration " << i << std::endl;
+	unsigned long long total_count = 0;
+	std::vector<int> count;
+	if (blocked) {
+		count.resize(N);
+	}
+	lloyd_update_cluster<T, blocked>(data, cluster, center, norm_data, block_data, norm_center, block_center, Y, Z, min_dist, count);
+	if (blocked) {
+		total_count = std::accumulate(count.begin(), count.end(), 0);
+	}
+	int it = 0;
+	for (; it < max_iteration; ++it) {
+		//std::cerr << "start iteration " << it << std::endl;
 		bool changed1, changed2;
 		changed1 = lloyd_update_center<T, blocked>(data, cluster, center, precision, workspace1, workspace2, B, D, norm_center, block_center, Y, Z, min_dist);
 		//std::cerr << "center changed " << changed1 << std::endl;
-		changed2 = lloyd_update_cluster<T, blocked>(data, cluster, center, norm_data, block_data, norm_center, block_center, Y, Z, min_dist);
+		changed2 = lloyd_update_cluster<T, blocked>(data, cluster, center, norm_data, block_data, norm_center, block_center, Y, Z, min_dist, count);
 		//std::cerr << "cluster changed " << changed2 << std::endl;
 		if (!changed1 && !changed2) {
-			std::cerr << "converges at step " << i << std::endl;
+			std::cerr << "converges at step " << it << std::endl;
 			break;
 		}
 		if (until_converge)
 			max_iteration += 1;
 		nl = compute_loss(data, cluster, center);
-		if (0 != i && nl - ll > 1) {
-			std::cerr << "loss increase in step " << i << std::endl;
+		if (0 != it && nl - ll > 1) {
+			std::cerr << "loss increase in step " << it << std::endl;
 		}
-		std::cerr << "step " << i << " loss " << nl << std::endl;
+		std::cerr << "step " << it << " loss " << nl;
+		if (blocked) {
+			int iteration_count = std::accumulate(count.begin(), count.end(), 0);
+			std::cerr << " percentage save " << static_cast<double>(iteration_count) / static_cast<double>(N * K);
+			total_count += iteration_count;
+		}
+		std::cerr << std::endl;
 		ll = nl;
+	}
+
+	if (blocked) {
+		std::cerr << "total speedup " << static_cast<double>((it + 1) * N * K) / static_cast<double>(total_count) << std::endl;
 	}
 
 	return 0;
