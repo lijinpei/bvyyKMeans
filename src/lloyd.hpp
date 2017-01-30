@@ -4,7 +4,11 @@
 #include "block.hpp"
 
 template <class T, bool blocked>
-bool lloyd_update_center(const DataMat<T> &data, const ClusterVec &cluster, CenterMat<T> &center, double precision, CenterMat<T> &workspace1, ClusterVec &workspace2, const int B, const int D, std::vector<double> &norm_center, std::vector<T> &block_center, std::vector<bool> &Y, std::vector<bool> &Z, const std::vector<double> &min_dist) {
+bool lloyd_update_center(const DataMat<T> &data, const ClusterVec &cluster, CenterMat<T> &center, double precision,
+		CenterMat<T> &workspace1, ClusterVec &workspace2,
+		const int B, const int D,
+		std::vector<double> &norm_center, std::vector<T> &block_center,
+		std::vector<bool> &Y, std::vector<bool> &Z, const std::vector<double> &min_dist) {
 	//std::cerr << "start lloyd update center" << std::endl;
 	const int N = data.size();
 	const int K = center.size();
@@ -51,7 +55,9 @@ bool lloyd_update_center(const DataMat<T> &data, const ClusterVec &cluster, Cent
 }
 
 template <class T, bool blocked>
-bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const CenterMat<T> &center, const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> &norm_center, std::vector<T> &block_center, const std::vector<bool> &Y, const std::vector<bool> Z, std::vector<double> &min_dist) {
+bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const CenterMat<T> &center,
+		const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> &norm_center, std::vector<T> &block_center,
+		const std::vector<bool> &Y, const std::vector<bool> Z, std::vector<double> &min_dist) {
 	//std::cerr << "start lloyd update cluster" << std::endl;
 	double l1 = compute_loss(data, cluster, center);
 	bool changed = false;
@@ -95,7 +101,9 @@ bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const Cen
 }
 
 template <class T, bool blocked>
-int lloyd(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, double precision, int D, int max_interation, bool until_converge, const int B, const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> &norm_center, std::vector<T> &block_center) {
+int lloyd(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
+		const double precision, const int D, int max_iteration, const bool until_converge,
+		const int B, const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> &norm_center, std::vector<T> &block_center) {
 	std::cerr << "start lloyd iteration" << std::endl;
 	const int K = center.size();
 	const int N = data.size();
@@ -114,7 +122,7 @@ int lloyd(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, dou
 		std::fill(Z.begin(), Z.end(), false);
 	}
 	lloyd_update_cluster<T, blocked>(data, cluster, center, norm_data, block_data, norm_center, block_center, Y, Z, min_dist);
-	for (int i = 0; i < max_interation; ++i) {
+	for (int i = 0; i < max_iteration; ++i) {
 		//std::cerr << "start iteration " << i << std::endl;
 		bool changed1, changed2;
 		changed1 = lloyd_update_center<T, blocked>(data, cluster, center, precision, workspace1, workspace2, B, D, norm_center, block_center, Y, Z, min_dist);
@@ -126,7 +134,7 @@ int lloyd(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, dou
 			break;
 		}
 		if (until_converge)
-			max_interation += 1;
+			max_iteration += 1;
 		nl = compute_loss(data, cluster, center);
 		if (0 != i && nl - ll > 1) {
 			std::cerr << "loss increase in step " << i << std::endl;

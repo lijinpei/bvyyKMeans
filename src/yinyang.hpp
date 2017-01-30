@@ -15,7 +15,10 @@
 // ran when cluster center are just generated
 // divide center into groups and initialize other values
 template <class T, bool blocked>
-int yinyang_first_iteration(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, int G, double precision, ClusterVec &group, std::vector<std::vector<float>> &lbg, std::vector<float> &ub, CenterMat<T> &center_sum, ClusterVec &center_count, std::vector<std::set<int>> &centers_in_group, int D, const std::vector<double> &norm_data, const std::vector<T> block_data, std::vector<double> &norm_center, std::vector<T> &block_center) {
+int yinyang_first_iteration(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
+		int G, double precision, ClusterVec &group, std::vector<std::vector<float>> &lbg, std::vector<float> &ub,
+		CenterMat<T> &center_sum, ClusterVec &center_count, std::vector<std::set<int>> &centers_in_group,
+		int D, const std::vector<double> &norm_data, const std::vector<T> block_data, std::vector<double> &norm_center, std::vector<T> &block_center) {
 	std::cerr << "start yinyang first iteration" << std::endl;
 	int N = data.size();
 	int K = center.size();
@@ -69,7 +72,9 @@ int yinyang_first_iteration(const DataMat<T> &data, ClusterVec &cluster, CenterM
 }
 
 template <class T, bool blocked>
-bool update_center(CenterMat<T> &center, ClusterVec &group, CenterMat<T> &center_sum, ClusterVec &center_count, std::vector<float> &delta_c, std::vector<float> &delta_g, double precision, std::vector<double> &norm_center, std::vector<T> &block_center, const int B, const int D) {
+bool update_center(CenterMat<T> &center, ClusterVec &group, CenterMat<T> &center_sum, ClusterVec &center_count,
+		std::vector<float> &delta_c, std::vector<float> &delta_g, double precision,
+		std::vector<double> &norm_center, std::vector<T> &block_center, const int B, const int D) {
 	//std::cerr << "start update_center" << std::endl;
 	bool changed = false;
 	T tmp_center;
@@ -102,7 +107,11 @@ bool update_center(CenterMat<T> &center, ClusterVec &group, CenterMat<T> &center
 }
 
 template <class T, bool blocked>
-bool yinyang_update_cluster(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, ClusterVec &group, std::vector<std::set<int>> &centers_in_group, std::vector<std::vector<float>> &lbg, std::vector<float> &ub, std::vector<float> &delta_c, std::vector<float> &delta_g, CenterMat<T> &center_sum, std::vector<int> &center_count, std::vector<int> &count, const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> norm_center, std::vector<T> &block_center) {
+bool yinyang_update_cluster(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
+		ClusterVec &group, std::vector<std::set<int>> &centers_in_group,
+		std::vector<std::vector<float>> &lbg, std::vector<float> &ub, std::vector<float> &delta_c, std::vector<float> &delta_g,
+		CenterMat<T> &center_sum, std::vector<int> &center_count, std::vector<int> &count,
+		const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> norm_center, std::vector<T> &block_center) {
 	//std::cerr << "start yinyang_update_cluster" << std::endl;
 	bool changed = false;
 	int N = data.size();
@@ -204,7 +213,10 @@ int cmp_cluster(ClusterVec &cluster, ClusterVec &cluster1) {
 }
 
 template <class T, bool blocked>
-int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, const int D, const int G, const int B, double precision, int max_iteration, bool until_converge, bool debug, const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> &norm_center, std::vector<T> &block_center) {
+int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
+		const int D, const int G, const int B,
+		double precision, int max_iteration, bool until_converge, bool debug,
+		const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> &norm_center, std::vector<T> &block_center) {
 	int N = data.size();
 	int K = center.size();
 
