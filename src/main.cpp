@@ -96,7 +96,7 @@ int run_main(PConf conf) {
 		}
 		double annz2 = static_cast<double>(non_zero_count) / static_cast<double>(N * D);
 		std::cerr << "average number of non zero elements in original data " << annz2 << std::endl; 
-		std::cerr << "relative annz " << (annz1 * B) / (annz2 * D);
+		std::cerr << "relative annz " << (annz1 * B) / (annz2 * D) << std::endl;
 	}
 
 	return 0;
