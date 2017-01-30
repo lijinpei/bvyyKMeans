@@ -8,6 +8,7 @@
 #include <set>
 #include <iostream>
 #include <cmath>
+#include <numeric>
 
 
 // first iteration of yinyangkmeans
@@ -92,7 +93,7 @@ bool update_center(CenterMat<T> &center, ClusterVec &group, CenterMat<T> &center
 }
 
 template <class T>
-bool yinyang_update_cluster(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, ClusterVec &group, std::vector<std::set<int>> &centers_in_group, std::vector<std::vector<float>> &lbg, std::vector<float> &ub, std::vector<float> &delta_c, std::vector<float> &delta_g, CenterMat<T> &center_sum, std::vector<int> &center_count) {
+bool yinyang_update_cluster(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, ClusterVec &group, std::vector<std::set<int>> &centers_in_group, std::vector<std::vector<float>> &lbg, std::vector<float> &ub, std::vector<float> &delta_c, std::vector<float> &delta_g, CenterMat<T> &center_sum, std::vector<int> &center_count, std::vector<int> &count) {
 	//std::cerr << "start yinyang_update_cluster" << std::endl;
 	bool changed = false;
 	int N = data.size();
@@ -119,6 +120,7 @@ bool yinyang_update_cluster(const DataMat<T> &data, ClusterVec &cluster, CenterM
 		if (min_lbg < 0 || min_lbg > ub[n])
 			continue;
 		ub[n] = bvyyKMeansDistance(data[n], center[cluster[n]]);
+		++count[n];
 		if (min_lbg > ub[n])
 			continue;
 		//std::cerr << "pass global filtering ";
@@ -142,6 +144,7 @@ bool yinyang_update_cluster(const DataMat<T> &data, ClusterVec &cluster, CenterM
 					continue;
 				*/
 				float tmp_d = bvyyKMeansDistance(data[n], center[c]);
+				++count[n];
 				if (tmp_d < ub[n]) {
 					//std::cerr << "pass local filtering ";
 					changed = true;
@@ -215,6 +218,7 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, i
 	//std::cerr << cluster;
 	//std::cerr << "max iteration " << max_iteration << std::endl;
 	double ll = compute_loss(data, cluster, center), nl;
+	std::vector<int> count(N);
 	for (int it = 1; it < max_iteration; ++it) {
 		bool changed1, changed2;
 		changed1 = update_center(center, group, center_sum, center_count, delta_c, delta_g, precision);
@@ -230,7 +234,7 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, i
 				std::cerr << "different center in step " << it << std::endl;
 			}
 		}
-		changed2 = yinyang_update_cluster(data, cluster, center, group, centers_in_group, lbg, ub, delta_c, delta_g, center_sum, center_count);
+		changed2 = yinyang_update_cluster(data, cluster, center, group, centers_in_group, lbg, ub, delta_c, delta_g, center_sum, center_count, count);
 		//std::cerr << "cluster changed " << changed2 << std::endl;
 		nl = compute_loss(data, cluster, center);
 		if (nl - ll > 1) {
@@ -253,10 +257,12 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, i
 		if (nl - ll > 1) {
 			std::cerr << "loss increase in step " << it << std::endl;
 		}
-		std::cerr << "step " << it << " loss " << nl << std::endl;
+		int total_count = std::accumulate(count.begin(), count.end(), 0);
+		std::cerr << "step " << it << " loss " << nl << " total number of distance count " <<  total_count << " percentage " << static_cast<double>(total_count)/static_cast<double>(N * K) << std::endl;
 		ll = nl;
 		if (until_converge)
 			++max_iteration;
+		std::fill(count.begin(), count.end(), 0);
 	}
 
 	return 0;

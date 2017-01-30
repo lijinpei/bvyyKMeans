@@ -213,7 +213,6 @@ int KMeans_load_seed(std::string &file_name, int &K, int &D, CenterMat<T> &cente
 			fin.read(reinterpret_cast<char*>(&tmp_v), sizeof(double));
 			bvyyKMeansInsert(center[k], d, tmp_v);
 		}
-		std::cerr << std::endl;
 	}
 	fin.close();
 
