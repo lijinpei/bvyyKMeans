@@ -52,13 +52,13 @@ int run_main(PConf conf) {
 	std::vector<T> block_data, block_center;
 	if (B > 0) {
 		norm_data.resize(N);
-		block_data.resize(N);
+		block_data = std::vector<T>(N, T(B));
 		for (int n = 0; n < N; ++n) {
 			norm_data[n] = bvyyKMeansNorm(data[n]);
 			generate_block_vector(block_data[n], data[n], B, D);
 		}
 		norm_center.resize(K);
-		block_center.resize(K);
+		block_center = std::vector<T>(K, T(B));
 		for (int k = 0; k < K; ++k) {
 			norm_center[k] = bvyyKMeansNorm(center[k]);
 			generate_block_vector(block_center[k], center[k], B, D);

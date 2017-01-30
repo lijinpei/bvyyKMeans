@@ -217,6 +217,7 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 		const int D, const int G, const int B,
 		double precision, int max_iteration, bool until_converge, bool debug,
 		const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> &norm_center, std::vector<T> &block_center) {
+
 	int N = data.size();
 	int K = center.size();
 
@@ -244,13 +245,8 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 	//std::cerr << "max iteration " << max_iteration << std::endl;
 	double ll = compute_loss(data, cluster, center), nl;
 	std::vector<int> count(N);
-	std::vector<bool> Y, Z;
-	std::vector<double> min_dist;
-	if (debug) {
-		Y.resize(N);
-		Z.resize(N);
-		min_dist.resize(N);
-	}
+	std::vector<bool> tmp_Y, tmp_Z;
+	std::vector<double> tmp_min_dist;
 	for (int it = 1; it < max_iteration; ++it) {
 		bool changed1, changed2;
 		changed1 = update_center<T, blocked>(center, group, center_sum, center_count, delta_c, delta_g, precision, norm_center, block_center, B, D);
@@ -261,7 +257,7 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 		}
 		ll = nl;
 		if (debug) {
-			lloyd_update_center<T, blocked>(data, cluster, center1, precision, workspace1, workspace2, B, D, norm_center, block_center, Y, Z, min_dist);
+			lloyd_update_center<T, false>(data, cluster, center1, precision, workspace1, workspace2, B, D, norm_center, block_center, tmp_Y, tmp_Z, tmp_min_dist);
 			if (cmp_center(center, center1, D, precision)) {
 				std::cerr << "different center in step " << it << std::endl;
 			}
@@ -274,7 +270,7 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 		}
 		ll = nl;
 		if (debug) {
-			lloyd_update_cluster<T, blocked>(data, cluster1, center, norm_data, block_data, norm_center, block_center, Y, Z, min_dist);
+			lloyd_update_cluster<T, false>(data, cluster1, center, norm_data, block_data, norm_center, block_center, tmp_Y, tmp_Z, tmp_min_dist);
 			if (cmp_cluster(cluster, cluster1)) {
 				std::cerr << "different cluster in step " << it << std::endl;
 			}

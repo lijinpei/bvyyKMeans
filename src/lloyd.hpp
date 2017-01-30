@@ -26,7 +26,7 @@ bool lloyd_update_center(const DataMat<T> &data, const ClusterVec &cluster, Cent
 		workspace2[c] += 1;
 		workspace1[c] += data[n];
 	}
-	for (int k = 0; k < K; ++k)
+	for (int k = 0; k < K; ++k) {
 		if (0 == workspace2[k]) {
 			std::cerr << "zero data point in cluster" << std::endl;
 			continue;
@@ -38,6 +38,7 @@ bool lloyd_update_center(const DataMat<T> &data, const ClusterVec &cluster, Cent
 					Y[k] = true;
 			center[k] = tmp_vec;
 		}
+	}
 	if (blocked) {
 		for (int n = 0; n < N; ++n)
 			if (bvyyKMeansDistance(data[n], center[cluster[n]]) < min_dist[n])
