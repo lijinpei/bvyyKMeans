@@ -1,9 +1,10 @@
 #ifndef LLOYD_HPP
 #define LLOYD_HPP
 #include "common.hpp"
+#include "block.hpp"
 
-template <class T>
-bool lloyd_update_center(const DataMat<T> &data, const ClusterVec &cluster, CenterMat<T> &center, double precision, CenterMat<T> &workspace1, ClusterVec &workspace2) {
+template <class T, bool blocked>
+bool lloyd_update_center(const DataMat<T> &data, const ClusterVec &cluster, CenterMat<T> &center, double precision, CenterMat<T> &workspace1, ClusterVec &workspace2, const int B, std::vector<double> &norm_center, std::vector<T> &block_center, std::vector<bool> &Y, std::vector<bool> &Z, const std::vector<double> &min_dist) {
 	//std::cerr << "start lloyd update center" << std::endl;
 	const int N = data.size();
 	const int K = center.size();
@@ -12,6 +13,10 @@ bool lloyd_update_center(const DataMat<T> &data, const ClusterVec &cluster, Cent
 	for (int k = 0; k < K; ++k)
 		workspace1[k].clear();
 	std::fill(workspace2.begin(), workspace2.end(), 0);
+	if (blocked) {
+		std::fill(Y.begin(), Y.end(), false);
+		std::fill(Z.begin(), Z.end(), false);
+	}
 	for (int n = 0; n < N; ++n) {
 		int c = cluster[n];
 		workspace2[c] += 1;
@@ -25,8 +30,21 @@ bool lloyd_update_center(const DataMat<T> &data, const ClusterVec &cluster, Cent
 			T tmp_vec = workspace1[k] / workspace2[k];
 			if (bvyyKMeansDistance(tmp_vec, center[k]) > precision)
 				changed = true;
+			else {
+				if (blocked)
+					Y[k] = true;
+			}
 			center[k] = tmp_vec;
 		}
+	if (blocked) {
+		for (int n = 0; n < N; ++n)
+			if (bvyyKMeansDistance(data[n], center[cluster[n]]) < min_dist[n])
+				Z[n] = true;
+		for (int k = 0; k < K; ++k) {
+			norm_center[k] = bvyyKMeansNorm(center[k]);
+			generate_block_vector(block_center[k], center[k], B, D);
+		}
+	}
 	double l2 = compute_loss(data, cluster, center);
 	if (l2 - l1 > 1)
 		std::cerr << "Loss increases in update center" << std::endl;
@@ -34,8 +52,8 @@ bool lloyd_update_center(const DataMat<T> &data, const ClusterVec &cluster, Cent
 	return changed;
 }
 
-template <class T>
-bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const CenterMat<T> &center) {
+template <class T, bool blocked>
+bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const CenterMat<T> &center, const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> &norm_center, std::vector<double> &block_center, const std::vector<bool> &Y, const std::vector<bool> Z, std::vector<double> &min_dist) {
 	//std::cerr << "start lloyd update cluster" << std::endl;
 	double l1 = compute_loss(data, cluster, center);
 	bool changed = false;
@@ -46,6 +64,12 @@ bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const Cen
 		int mp = 0;
 		float mv = bvyyKMeansDistance(data[n], center[0]);
 		for (int k = 1; k < K; ++k) {
+			if (Z[n] && Y[k])
+				continue;
+			if (bvyyKmeansLBC(n, norm_data, k, norm_center) >= mv)
+				continue;
+			if (bvyyKmeansLBB(n, norm_data, block_data, k, norm_center, block_center) >= mv)
+				continue;
 			float nv = bvyyKMeansDistance(data[n], center[k]);
 			if (nv < mv) {
 				mp = k;
@@ -54,11 +78,14 @@ bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const Cen
 		}
 		if (cluster[n] != mp)
 			changed = true;
+	/*
 		double d1 = bvyyKMeansDistance(data[n], center[mp]);
 		double d2 = bvyyKMeansDistance(data[n], center[cluster[n]]);
 		if (cluster[n] != mp && d1 > d2)
 			std::cerr << "Loss increases in single update cluster " << mp << " " << cluster[n] << std::endl;
+	*/
 		cluster[n] = mp;
+		min_dist[n] = mv;
 	}
 	double l2 = compute_loss(data, cluster, center);
 	if (l2 > l1)
@@ -67,8 +94,8 @@ bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const Cen
 	return changed;
 }
 
-template <class T>
-int lloyd(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, double precision, int D, int max_interation, bool until_converge) {
+template <class T, bool blocked>
+int lloyd(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, double precision, int D, int max_interation, bool until_converge, const int B, const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> &norm_center, std::vector<T> &block_center) {
 	std::cerr << "start lloyd iteration" << std::endl;
 	const int K = center.size();
 
@@ -76,13 +103,14 @@ int lloyd(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center, dou
 	ClusterVec workspace2(K);
 	double ll;
 	double nl;
-	lloyd_update_cluster(data, cluster, center);
+	std::vector<bool> Y(K), Z(N);
+	lloyd_update_cluster(data, cluster, center, norm_data, block_data, norm_center, block_center, Y, Z);
 	for (int i = 0; i < max_interation; ++i) {
 		//std::cerr << "start iteration " << i << std::endl;
 		bool changed1, changed2;
-		changed1 = lloyd_update_center(data, cluster, center, precision, workspace1, workspace2);
+		changed1 = lloyd_update_center(data, cluster, center, precision, workspace1, workspace2, B, norm_data, block_data, norm_center, block_center, Y, Z);
 		//std::cerr << "center changed " << changed1 << std::endl;
-		changed2 = lloyd_update_cluster(data, cluster, center);
+		changed2 = lloyd_update_cluster(data, cluster, center, norm_data, block_data, norm_center, block_center, Y, Z);
 		//std::cerr << "cluster changed " << changed2 << std::endl;
 		if (!changed1 && !changed2) {
 			std::cerr << "converges at step " << i << std::endl;
