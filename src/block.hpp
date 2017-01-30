@@ -7,7 +7,7 @@ template <class T>
 void generate_block_vector(T &vec_target, const T&vec_source, const int B, const int D) {
 	int div = D / B;
 	int j1 = 0, j2 = 0;
-	double tmp_v;
+	double tmp_v = 0;
 	for (int b = 0; b < B - 1; ++b) {
 		tmp_v = 0;
 		j2 += div;

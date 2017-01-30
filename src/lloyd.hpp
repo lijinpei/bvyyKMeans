@@ -69,12 +69,14 @@ bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const Cen
 		int mp = 0;
 		float mv = bvyyKMeansDistance(data[n], center[0]);
 		for (int k = 1; k < K; ++k) {
-			if (Z[n] && Y[k])
-				continue;
-			if (bvyyKMeansLBC(norm_data[n], norm_center[k]) >= mv)
-				continue;
-			if (bvyyKMeansLBB(norm_data[n], block_data[n], norm_center[k], block_center[k]) >= mv)
-				continue;
+			if (blocked) {
+				if (Z[n] && Y[k])
+					continue;
+				if (bvyyKMeansLBC(norm_data[n], norm_center[k]) >= mv)
+					continue;
+				if (bvyyKMeansLBB(norm_data[n], block_data[n], norm_center[k], block_center[k]) >= mv)
+					continue;
+			}
 			float nv = bvyyKMeansDistance(data[n], center[k]);
 			if (nv < mv) {
 				mp = k;
