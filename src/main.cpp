@@ -77,6 +77,27 @@ int run_main(PConf conf) {
 			lloyd<T, false>(data, cluster, center, conf->norm_precision, D, conf->max_interation, conf->until_converge, B, norm_data, block_data, norm_center, block_center);
 	}
 	output_cluster(conf, cluster);
+	if (B > 0 && conf->sparse) {
+		long long int non_zero_count = 0;
+		for (const auto & vec: block_data) {
+			for (const auto& v:vec) {
+				if (std::abs(v) > 1e-5)
+					++non_zero_count;
+			}
+		}
+		double annz1 = static_cast<double>(non_zero_count) / static_cast<double>(N * B);
+		std::cerr << "average number of non zero elements in blocked data " << annz1 << std::endl; 
+		non_zero_count = 0;
+		for (const auto & vec: data) {
+			for (const auto& v:vec) {
+				if (std::abs(v) > 1e-5)
+					++non_zero_count;
+			}
+		}
+		double annz2 = static_cast<double>(non_zero_count) / static_cast<double>(N * D);
+		std::cerr << "average number of non zero elements in original data " << annz2 << std::endl; 
+		std::cerr << "relative annz " << annz1 / annz2;
+	}
 
 	return 0;
 }
