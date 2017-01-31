@@ -66,6 +66,7 @@ int run_main(PConf conf) {
 	}
 	if (conf->yinyang) {
 		int G = conf->group_number;
+		std::cerr << "group number " << G << std::endl;
 		if (B > 0)
 			yinyang<T, true>(data, cluster, center, D, G, B, conf->norm_precision, conf->max_interation, conf->until_converge, conf->debug, norm_data, block_data, norm_center, block_center);
 		else
