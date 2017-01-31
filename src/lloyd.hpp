@@ -172,6 +172,7 @@ int lloyd(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 
 	if (blocked) {
 		std::cerr << "total speedup " << static_cast<double>(total_count) / static_cast<double>((it + 1) * N * K) << std::endl;
+		std::cerr << "total count " << total_count << std::endl;
 	}
 
 	return 0;
