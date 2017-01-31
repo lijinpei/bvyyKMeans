@@ -46,7 +46,7 @@ int kmeans_plus_plus_initialize(const DataMat<T> &data, CenterMat<T> &center) {
 
 		//min_dist.array().min((data.colwise() - center.col(i)).colwise().squaredNorm().transpose().cast<double>().array());
 		for (int n = 0; n < N; ++n) {
-			double nv = bvyyKMeansDistance(data[n], center[k]);
+			double nv = bvyyKMeansSquaredDistance(data[n], center[k]);
 			if (nv < min_dist[n])
 				min_dist[n] = nv;
 		}
