@@ -41,16 +41,10 @@ int yinyang_first_iteration(const DataMat<T> &data, ClusterVec &cluster, CenterM
 		Z.resize(N);
 		tmp_count.resize(N);
 	}
-	std::cerr << "start update cluster" <<std::endl;
 	lloyd_update_cluster<T, blocked>(data, cluster, center, norm_data, block_data, norm_center, block_center, Y, Z, min_dist, tmp_count);
-	std::cerr << "finished update cluster" <<std::endl;
 	count = std::accumulate(tmp_count.begin(), tmp_count.end(), 0);
-	std::cerr << "start update center" <<std::endl;
 	lloyd_update_center<T, blocked>(data, cluster, center, precision, workspace1, workspace2, B, D, norm_center, block_center, Y, Z, min_dist);
-	std::cerr << "finished update center" <<std::endl;
-	std::cerr << "start update cluster" <<std::endl;
 	lloyd_update_cluster<T, blocked>(data, cluster, center, norm_data, block_data, norm_center, block_center, Y, Z, min_dist, tmp_count);
-	std::cerr << "finished update cluster" <<std::endl;
 	count += std::accumulate(tmp_count.begin(), tmp_count.end(), 0);
 	std::cerr << "step 0 loss " << compute_loss(data, cluster, center) << std::endl;
 	std::vector<std::vector<double>> d(N, std::vector<double>(K));
@@ -174,14 +168,12 @@ bool yinyang_update_cluster(const DataMat<T> &data, ClusterVec &cluster, CenterM
 		//std::cerr << "test2" << std::endl;
 				if (lbg[n][g] >= 0 && old_lbg[g] - delta_c[c] >= lbg[n][g])
 					continue;
-				bool block_filtered = false;
 				if (blocked) {
 					double tmp_b = bvyyKMeansLBB(norm_data[n], block_data[n], norm_center[c], block_center[c]);
 					if (tmp_b >= ub[n]) {
 						if (lbg[n][g] < 0 || tmp_b < lbg[n][g])
 							lbg[n][g] = tmp_b;
-						//continue;
-						block_filtered = true;
+						continue;
 					}
 				}
 				float tmp_d = bvyyKMeansDistance(data[n], center[c]);
@@ -199,8 +191,6 @@ bool yinyang_update_cluster(const DataMat<T> &data, ClusterVec &cluster, CenterM
 					center_count[c] += 1;
 					center_sum[l] -= data[n];
 					center_sum[c] += data[n];
-					if (block_filtered)
-						std::cerr << "wrong block filter" << std::endl;
 				} else {
 					if (lbg[n][g] < 0 || tmp_d < lbg[n][g])
 						lbg[n][g] = tmp_d;

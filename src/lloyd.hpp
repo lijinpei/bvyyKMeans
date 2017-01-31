@@ -60,8 +60,8 @@ bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const Cen
 		const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> &norm_center, std::vector<T> &block_center,
 		const std::vector<bool> &Y, const std::vector<bool> Z, std::vector<double> &min_dist,
 		std::vector<int> &count) {
-	std::cerr << "start lloyd update cluster" << std::endl;
-	std::cerr << "blocked " << blocked << std::endl;
+	//std::cerr << "start lloyd update cluster" << std::endl;
+	//std::cerr << "blocked " << blocked << std::endl;
 	if (blocked) {
 		std::fill(count.begin(), count.end(), 0);
 	}
