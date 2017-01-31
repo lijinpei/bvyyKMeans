@@ -64,20 +64,6 @@ int run_main(PConf conf) {
 			generate_block_vector(block_center[k], center[k], B, D);
 		}
 	}
-	if (conf->yinyang) {
-		int G = conf->group_number;
-		std::cerr << "group number " << G << std::endl;
-		if (B > 0)
-			yinyang<T, true>(data, cluster, center, D, G, B, conf->norm_precision, conf->max_interation, conf->until_converge, conf->debug, norm_data, block_data, norm_center, block_center);
-		else
-			yinyang<T, false>(data, cluster, center, D, G, B, conf->norm_precision, conf->max_interation, conf->until_converge, conf->debug, norm_data, block_data, norm_center, block_center);
-	} else {
-		if (B > 0)
-			lloyd<T, true>(data, cluster, center, conf->norm_precision, D, conf->max_interation, conf->until_converge, B, norm_data, block_data, norm_center, block_center);
-		else
-			lloyd<T, false>(data, cluster, center, conf->norm_precision, D, conf->max_interation, conf->until_converge, B, norm_data, block_data, norm_center, block_center);
-	}
-	output_cluster(conf, cluster);
 	if (B > 0 && conf->sparse) {
 		long long int non_zero_count = 0;
 		for (const auto & vec: block_data) {
@@ -99,6 +85,20 @@ int run_main(PConf conf) {
 		std::cerr << "average number of non zero elements in original data " << annz2 << std::endl; 
 		std::cerr << "relative annz " << (annz1 * B) / (annz2 * D) << std::endl;
 	}
+	if (conf->yinyang) {
+		int G = conf->group_number;
+		std::cerr << "group number " << G << std::endl;
+		if (B > 0)
+			yinyang<T, true>(data, cluster, center, D, G, B, conf->norm_precision, conf->max_interation, conf->until_converge, conf->debug, norm_data, block_data, norm_center, block_center);
+		else
+			yinyang<T, false>(data, cluster, center, D, G, B, conf->norm_precision, conf->max_interation, conf->until_converge, conf->debug, norm_data, block_data, norm_center, block_center);
+	} else {
+		if (B > 0)
+			lloyd<T, true>(data, cluster, center, conf->norm_precision, D, conf->max_interation, conf->until_converge, B, norm_data, block_data, norm_center, block_center);
+		else
+			lloyd<T, false>(data, cluster, center, conf->norm_precision, D, conf->max_interation, conf->until_converge, B, norm_data, block_data, norm_center, block_center);
+	}
+	output_cluster(conf, cluster);
 
 	return 0;
 }
