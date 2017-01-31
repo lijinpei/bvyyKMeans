@@ -13,11 +13,11 @@ void generate_block_vector(T &vec_target, const T&vec_source, const int B, const
 		j2 += div;
 		for (; j1 < j2; ++j1)
 			tmp_v += vec_source[j1] * vec_source[j1];
-		bvyyKMeansInsert(vec_target, b, tmp_v);
+		bvyyKMeansInsert(vec_target, b, std::sqrt(tmp_v));
 	}
 	for (;j1 < D; ++j1)
 		tmp_v += vec_source[j1] * vec_source[j1];
-	bvyyKMeansInsert(vec_target, B - 1, tmp_v);
+	bvyyKMeansInsert(vec_target, B - 1, std::sqrt(tmp_v));
 }
 
 template <class T>
