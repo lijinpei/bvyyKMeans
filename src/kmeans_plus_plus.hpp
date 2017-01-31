@@ -27,8 +27,8 @@ template <class T>
 int kmeans_plus_plus_initialize(const DataMat<T> &data, CenterMat<T> &center) {
 	const int N = data.size();
 	const int K = center.size();
-	std::cerr << "Number of data points in kmeans++ " << N << std::endl;
-	std::cerr << "Number of groups in kmeans++ " << K << std::endl;
+	//std::cerr << "Number of data points in kmeans++ " << N << std::endl;
+	//std::cerr << "Number of groups in kmeans++ " << K << std::endl;
 	boost::random::mt19937 gen{static_cast<std::uint32_t>(std::time(0))};
 	boost::random::uniform_int_distribution<> dist(0, N - 1);
 	ClusterVec chosen(N);

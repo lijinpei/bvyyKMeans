@@ -105,7 +105,7 @@ inline double bvyyKMeansInnerProduct(const T&v1, const T&v2) {
 
 template <class T>
 int KMeans_get_data(PConf conf, DataMat<T> &data, LabelVec &label) {
-	std::cerr << "get data" << std::endl;
+	//std::cerr << "get data" << std::endl;
 	FILE* f = fopen(conf->data_file_name.c_str(), "r");
 	const int& N = conf->data_number;
 	const int& D = conf->data_dimension;

@@ -69,7 +69,7 @@ bool lloyd_update_cluster(const DataMat<T> &data, ClusterVec &cluster, const Cen
 	bool changed = false;
 	int N = data.size();
 	int K = center.size();
-	std::cout << "K " << K << std::endl;
+	//std::cout << "K " << K << std::endl;
 	for (int n = 0; n < N; ++n) {
 		//std::cerr << "lloyd update cluster iteration " << n << std::endl;
 		int mp = 0;
@@ -116,7 +116,7 @@ template <class T, bool blocked>
 int lloyd(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 		const double precision, const int D, int max_iteration, const bool until_converge,
 		const int B, const std::vector<double> &norm_data, const std::vector<T> &block_data, std::vector<double> &norm_center, std::vector<T> &block_center) {
-	std::cerr << "start lloyd iteration" << std::endl;
+	//std::cerr << "start lloyd iteration" << std::endl;
 	const int K = center.size();
 	const int N = data.size();
 
@@ -171,7 +171,7 @@ int lloyd(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 	}
 
 	if (blocked) {
-		std::cerr << "total speedup " << static_cast<double>((it + 1) * N * K) / static_cast<double>(total_count) << std::endl;
+		std::cerr << "total speedup " << static_cast<double>(total_count) / static_cast<double>((it + 1) * N * K) << std::endl;
 	}
 
 	return 0;

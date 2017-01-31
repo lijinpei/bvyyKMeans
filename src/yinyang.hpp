@@ -254,7 +254,7 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 	unsigned long long total_count;
 	int tmp_int;
 	yinyang_first_iteration<T, blocked>(data, cluster, center, G, precision, group, lbg, ub, center_sum, center_count, centers_in_group, B, D, norm_data, block_data, norm_center, block_center, tmp_int);
-	total_count = tmp_int;
+	unsigned long long total_count1 = tmp_int;
 	total_count = N * K;
 	std::cerr << "step 0 totoal count " << total_count << " percentage " << static_cast<double>(total_count) / (N * K) << std::endl;
 	//std::cerr << cluster;
@@ -306,13 +306,15 @@ int yinyang(const DataMat<T> &data, ClusterVec &cluster, CenterMat<T> &center,
 		int iteration_count = std::accumulate(count.begin(), count.end(), 0);
 		std::cerr << "step " << it << " loss " << nl << " total number of distance count " <<  iteration_count << " percentage " << static_cast<double>(iteration_count)/static_cast<double>(N * K) << std::endl;
 		total_count += iteration_count;
+		total_count1 += iteration_count;
 		ll = nl;
 		if (until_converge)
 			++max_iteration;
 		std::fill(count.begin(), count.end(), 0);
 	}
 
-	std::cout << "total speed up " << static_cast<double>(N * K * it) / static_cast<double>(total_count) << std::endl;
+	std::cout << "total speed up " << static_cast<double>(total_count) / static_cast<double>(N * K * it) << std::endl;
+	std::cout << "total speed up 1 " << static_cast<double>(total_count1) / static_cast<double>(N * K * it) << std::endl;
 	return 0;
 }
 
